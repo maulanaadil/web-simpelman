@@ -1,9 +1,108 @@
-import type { Config } from "tailwindcss";
+import type { Config } from 'tailwindcss';
 
 export default {
-  content: ["./app/**/{**,.client,.server}/**/*.{js,jsx,ts,tsx}"],
+  content: ['./app/**/{**,.client,.server}/**/*.{js,jsx,ts,tsx}'],
   theme: {
-    extend: {},
+    colors: {
+      base: {
+        50: '#ffffff',
+        100: '#f9fafb',
+        200: '#f4f6f8',
+        300: '#c4c4c4',
+        400: '#9a9a9a',
+        700: '#292e32',
+        800: '#202427',
+        900: '#111315',
+      },
+      primary: {
+        50: '#e7f5ee',
+        100: '#b5dec9',
+        200: '#91cfaf',
+        300: '#5eb98a',
+        400: '#3fab73',
+        500: '#0f9650',
+        600: '#0e8949',
+        700: '#0b6b39',
+        800: '#08532c',
+        900: '#063f22',
+      },
+      secondary: {
+        50: '#e6f4fa',
+        100: '#b2deef',
+        200: '#8ccee7',
+        300: '#58b8dc',
+        400: '#38aad5',
+        500: '#0695cb',
+        600: '#0588b9',
+        700: '#046a90',
+        800: '#035270',
+        900: '#033f55',
+      },
+      neutral: {
+        25: '#f5f5f5',
+        50: '#e7eaee',
+        100: '#dcdfe5',
+        200: '#c4cad4',
+        300: '#a9b1bc',
+        400: '#8e99a4',
+        500: '#76818f',
+        600: '#5b6676',
+        700: '#414d5d',
+        800: '#253346',
+        900: '#192434',
+      },
+      success: {
+        50: '#eafef4',
+        100: '#cdfce5',
+        200: '#94f8c7',
+        300: '#5af4a9',
+        400: '#21f08b',
+        500: '#0dc76c',
+        600: '#09894a',
+        700: '#054b28',
+        800: '#032b18',
+        900: '#010c07',
+      },
+      danger: {
+        50: '#fffafa',
+        100: '#fde5e5',
+        200: '#fababa',
+        300: '#f68f8f',
+        400: '#f36565',
+        500: '#f03a3a',
+        600: '#b60e0e',
+        700: '#870a0a',
+        800: '#6f0808',
+        900: '#570707',
+      },
+    },
+    extend: {
+      boxShadow: {
+        'shadow-dark-4':
+          '0px 0px 32px 6px rgba(26,26,26,0.50), 0px 4px 50px 8px rgba(0,0,0,0.15)',
+        'shadow-dark-3': '0px 0px 32px 6px rgba(26,26,26,0.50)',
+        'shadow-dark-2': '0px 0px 8px 2px rgba(26,26,26,0.50)',
+        'shadow-dark-1': '1px 1px 4px 0px rgba(26,26,26,0.75)',
+        'shadow-light-4': '0px 0px 24px 12px rgba(26,26,26,0.10)',
+        'shadow-light-3': '0px 0px 36px -2px rgba(26,26,26,0.12)',
+        'shadow-light-2': '0px 0px 16px 0px rgba(26,26,26,0.08)',
+        'shadow-light-1': '1px 1px 4px 0px rgba(26,26,26,0.12)',
+        'drop-shadow-xxl': '0px 25px 50px -12px rgba(16,24,40,0.25)',
+        'drop-shadow-xl':
+          '0px 20px 25px -5px rgba(16,24,40,0.10), 0px 8px 10px -6px rgba(16,24,40,0.10)',
+        'drop-shadow-lg':
+          '0px 10px 15px -3px rgba(16,24,40,0.10), 0px 4px 6px -4px rgba(16,24,40,0.10)',
+        'drop-shadow-md':
+          '0px 4px 6px -1px rgba(16,24,40,0.10), 0px 2px 4px -2px rgba(16,24,40,0.10)',
+        'drop-shadow-sm':
+          '0px 1px 3px 0px rgba(16,24,40,0.10), 0px 1px 2px -1px rgba(16,24,40,0.10)',
+        'drop-shadow-xs': '0px 1px 2px 0px rgba(16,24,40,0.05)',
+      },
+      backdropBlur: {
+        md: '8px',
+        sm: '4px',
+      },
+    },
   },
   plugins: [],
 } satisfies Config;
