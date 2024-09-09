@@ -1,29 +1,35 @@
-import { Link, useLocation, useNavigate } from '@remix-run/react';
+import { User } from '@prisma/client';
+import { LoaderFunctionArgs } from '@remix-run/node';
+import {
+  Form,
+  Link,
+  useLoaderData,
+  useLocation,
+  useNavigate,
+} from '@remix-run/react';
+import { ArrowDown2, UserSquare } from 'iconsax-react';
 import Button from '~/components/button';
 import Logo from '~/components/logo';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '~/components/ui/popover';
+import { pages } from '~/constants/pages';
 import { cn } from '~/utils/common/styles';
 
-const pages = [
-  {
-    route: '/',
-    label: 'Home',
-  },
-  {
-    route: '/service',
-    label: 'Layanan',
-  },
-  {
-    route: '/activity',
-    label: 'Kegiatan',
-  },
-];
+type Props = {
+  user: Pick<User, 'name' | 'email'>;
+};
 
-export default function Header() {
+export default function Header({ user }: Props) {
   const location = useLocation();
   const navigate = useNavigate();
 
+  console.log(user, 'user');
+
   return (
-    <div className='container py-4 flex justify-between w-full bg-base-50'>
+    <div className='container py-4 flex justify-between w-full bg-base-100'>
       <Logo />
       <div className='flex justify-center items-center gap-10'>
         {pages.map((page) => (
@@ -41,14 +47,47 @@ export default function Header() {
           </Link>
         ))}
       </div>
-      <div className='flex items-center gap-4'>
-        <Button
-          text='Daftar'
-          variant='outline'
-          onClick={() => navigate('/auth/signup')}
-        />
-        <Button text='Masuk' onClick={() => navigate('/auth/signin')} />
-      </div>
+      {user ? (
+        <Popover>
+          <PopoverTrigger>
+            <div className='relative flex items-center justify-between gap-5 cursor-pointer'>
+              <UserSquare size='24' color='#09894a' />
+              <p className='font-medium text-base-900'>{user.name}</p>
+              <ArrowDown2 size='24' color='#232323' />
+            </div>
+          </PopoverTrigger>
+          <PopoverContent className='w-[14rem]'>
+            <ProfileDropdown />
+          </PopoverContent>
+        </Popover>
+      ) : (
+        <div className='flex items-center gap-4'>
+          <Button
+            text='Daftar'
+            variant='outline'
+            onClick={() => navigate('/signup')}
+          />
+          <Button text='Masuk' onClick={() => navigate('/signin')} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProfileDropdown() {
+  return (
+    <div className='flex flex-col gap-3 w-fit'>
+      <Link className='block p-3' to='/profile'>
+        Profile
+      </Link>
+      <Form method='post' action='/logout'>
+        <button
+          type='submit'
+          className='block p-3 text-danger-500 cursor-pointer'
+        >
+          Logout
+        </button>
+      </Form>
     </div>
   );
 }

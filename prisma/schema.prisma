@@ -13,4 +13,40 @@ model User {
     phoneNumber String? @unique
     password    String  
     name        String?
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+}
+
+model Garden {
+  id          String      @id @default(uuid())  
+  name        String @unique
+  address    String
+  imageUrl    String
+  type       GardenType
+  feedback    Feedback[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Feedback {
+  id          Int      @id @default(autoincrement())  
+  content     String
+  email       String
+  about       AboutFeedback
+  garden      Garden   @relation(fields: [gardenId], references: [id])
+  gardenId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum AboutFeedback {
+  infrastructural_facilities
+  service
+  location
+  advice
+}
+
+enum GardenType {
+  pemda
+  square
 }

@@ -74,6 +74,32 @@ module.exports = {
         'plugin:import/recommended',
         'plugin:import/typescript',
       ],
+      rules: {
+        '@typescript-eslint/no-unused-vars': [
+          'warn', // or 'error' to make it an error
+          {
+            vars: 'all',
+            args: 'after-used',
+            ignoreRestSiblings: true,
+          },
+        ],
+        'jsx-a11y/click-events-have-key-events': [
+          'false', // or 'error' to make it an error
+          {
+            vars: 'all',
+            args: 'after-used',
+            ignoreRestSiblings: true,
+          },
+        ],
+        'jsx-a11y/no-static-element-interactions': [
+          'false', // or 'error' to make it an error
+          {
+            vars: 'all',
+            args: 'after-used',
+            ignoreRestSiblings: true,
+          },
+        ],
+      },
     },
 
     // Node
