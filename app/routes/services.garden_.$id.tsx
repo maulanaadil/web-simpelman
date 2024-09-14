@@ -6,7 +6,6 @@ import { Controller } from 'react-hook-form';
 import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
 import { redirectWithSuccess } from 'remix-toast';
 import { z } from 'zod';
-import { zfd } from 'zod-form-data';
 import Banner from '~/components/banner';
 import Button from '~/components/button';
 import InputText from '~/components/input-text';
@@ -28,20 +27,18 @@ type LoaderData = {
   garden: Omit<Garden, 'createdAt' | 'updatedAt'> | null;
 };
 
-const schema = zfd.formData(
-  z.object({
-    email: z.string().email('Must be a valid email'),
-    about: z.enum([
-      'infrastructural_facilities',
-      'service',
-      'location',
-      'advice',
-    ]),
-    message: z
-      .string()
-      .min(10, { message: 'Message must be at least 10 characters' }),
-  })
-);
+const schema = z.object({
+  email: z.string().email('Must be a valid email'),
+  about: z.enum([
+    'infrastructural_facilities',
+    'service',
+    'location',
+    'advice',
+  ]),
+  message: z
+    .string()
+    .min(10, { message: 'Message must be at least 10 characters' }),
+});
 
 type FeedbackSchema = z.infer<typeof schema>;
 
