@@ -131,9 +131,9 @@ const InputText = <T extends FieldValues>(
   const getFixedInputWrapperClassName = cx(
     'transition-[outline] rounded-xl',
     (isFixed || isFixedSuffix || hasMaxCharLabel) &&
-      'flex outline outline-[1px] outline-base-300 bg-white',
+      'flex outline outline-[1px] outline-base-300 bg-base-50',
     isFocus && 'outline-primary-500',
-    disabled && 'opacity-50 pointer-events-none',
+    disabled && 'opacity-30 pointer-events-none',
     isPrefix && 'flex gap-3 items-center',
     className
   );
@@ -362,16 +362,13 @@ const InputText = <T extends FieldValues>(
     <div className={cx(`mb-3`, containerClassname)}>
       {label && (
         <div
-          className={cx(
-            'text-base-700 font-medium text-sm mb-2',
-            labelClassname
-          )}
+          className={cx('text-base-700 font-medium text-sm', labelClassname)}
         >
           {label}
         </div>
       )}
       {description && (
-        <div className={cx('text-base-400 text-sm mb-2', descriptionClassname)}>
+        <div className={cx('text-base-400 text-xs mb-2', descriptionClassname)}>
           {description}
         </div>
       )}

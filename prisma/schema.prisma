@@ -20,9 +20,9 @@ model User {
 model Garden {
   id          String      @id @default(uuid())  
   name        String @unique
-  address    String
+  address     String
   imageUrl    String
-  type       GardenType
+  type        GardenType
   feedback    Feedback[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -39,11 +39,98 @@ model Feedback {
   updatedAt   DateTime @updatedAt
 }
 
+model Graveyard {
+  id              String      @id @default(uuid())
+  name            String
+  mapsUrl         String
+  address         String
+  type            GraveyardType
+  imageUrl        String
+  religion        String
+  additionalInfo  Json
+  numberOfGrave   Int
+  deceased        Deceased[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Deceased {
+  id              String      @id @default(uuid())
+  name            String
+  fatherInLawName String
+  idCard          String @unique
+  Gender          Gender
+  placeOfBirth    String
+  dateOfBirth     DateTime
+  dateOfDeath     DateTime
+  burialDate      DateTime
+  graveyard       Graveyard @relation(fields: [graveyardId], references: [id])
+  graveyardId     String
+  additionalInfo  Json
+  addressDetail   AddressDetail?
+  additionalFile  AdditionalFile?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Heirs {
+  id           String      @id @default(uuid())
+  name         String
+  idCard       String      @unique
+  phoneNumber  String      
+  job          String
+  addressDetail AddressDetail?
+  additionalFile AdditionalFile?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AddressDetail {
+  id            String      @id @default(uuid())
+  homeNumber    String
+  street        String
+  rt            String
+  rw            String
+  province      String
+  city          String
+  district      String
+  neighborhood  String
+  deceased      Deceased?     @relation(fields: [deceasedId], references: [id])
+  deceasedId    String?       @unique
+  heirs         Heirs?  @relation(fields: [heirsId], references: [id])
+  heirsId       String? @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model AdditionalFile {
+  id                         String      @id @default(uuid())
+  ktpUrl                     String?
+  certificateUrl             String?
+  incapabilityCertificateUrl String?
+  deceased                   Deceased?     @relation(fields: [deceasedId], references: [id])
+  deceasedId                 String?       @unique
+  heirs                      Heirs?  @relation(fields: [heirsId], references: [id])
+  heirsId                    String? @unique
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+}
+
+enum Gender {
+  male
+  female
+}
+
 enum AboutFeedback {
   infrastructural_facilities
   service
   location
   advice
+}
+enum GraveyardType {
+  biasa
+  tumpang
+  covid
 }
 
 enum GardenType {

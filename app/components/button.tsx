@@ -3,7 +3,7 @@ import { cn } from '~/utils/common/styles';
 export type ButtonProps = {
   variant?: 'outline' | 'primary';
   size?: 'small' | 'medium' | 'large' | 'full';
-  text: string;
+  text: string | React.ReactNode;
   icon?: React.ReactNode;
   onClick?: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   className?: string;
@@ -30,7 +30,7 @@ export default function Button({
   };
 
   const buttonSize = {
-    small: 'px-5',
+    small: 'px-3 py-2 text-sm',
     medium: 'px-7',
     large: 'px-9',
     full: 'w-full',

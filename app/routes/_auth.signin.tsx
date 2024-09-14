@@ -1,26 +1,23 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { User } from '@prisma/client';
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from '@remix-run/node';
-import { Form, Link, useActionData, useNavigate } from '@remix-run/react';
+import { Form, Link, useNavigate } from '@remix-run/react';
 import { BackSquare } from 'iconsax-react';
+import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
 import { redirectWithInfo, redirectWithSuccess } from 'remix-toast';
 import { z } from 'zod';
-import { zfd } from 'zod-form-data';
 import Button from '~/components/button';
 import InputPassword from '~/components/input-password';
 import InputText from '~/components/input-text';
-import useCustomForm from '~/hooks/useCustomForm';
 import { prisma } from '~/services/db.server';
 import { sessionStorage } from '~/services/session.server';
-import { ActionErrors, validateAction } from '~/utils/common/validate';
 
-const schema = zfd.formData(
-  z.object({
-    email: z.string().email('Must be a valid email'),
-    password: z
-      .string()
-      .min(8, { message: 'Password must be at least 8 characters' }),
-  })
-);
+const schema = z.object({
+  email: z.string().email('Must be a valid email'),
+  password: z
+    .string()
+    .min(8, { message: 'Password must be at least 8 characters' }),
+});
 
 type SignInSchema = z.infer<typeof schema>;
 
@@ -42,19 +39,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const { errors, formData } = await validateAction<SignInSchema>({
-    request,
-    schema,
-  });
+  const {
+    errors,
+    data,
+    receivedValues: defaultValues,
+  } = await getValidatedFormData<SignInSchema>(request, zodResolver(schema));
 
   if (errors) {
-    return json<
-      Partial<
-        SignInSchema & {
-          errors: ActionErrors<SignInSchema>;
-        }
-      >
-    >(
+    return json(
       {
         email: undefined,
         password: undefined,
@@ -66,7 +58,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const user = await prisma.user.findFirst({
     where: {
-      email: formData.email,
+      email: data.email,
     },
     select: {
       name: true,
@@ -75,18 +67,14 @@ export async function action({ request }: ActionFunctionArgs) {
   });
 
   if (!user) {
-    return json<
-      Partial<
-        SignInSchema & {
-          errors: ActionErrors<SignInSchema>;
-        }
-      >
-    >(
+    return json(
       {
         email: undefined,
         password: undefined,
         errors: {
-          email: 'Email tidak ditemukan',
+          email: {
+            message: 'Email tidak ditemukan',
+          },
         },
       },
       { status: 400 }
@@ -108,13 +96,14 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function Signin() {
   const navigate = useNavigate();
-  const { control } = useCustomForm<SignInSchema>({
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+  const {
+    handleSubmit,
+    formState: { errors },
+    control,
+  } = useRemixForm<SignInSchema>({
+    mode: 'onSubmit',
+    resolver: zodResolver(schema),
   });
-  const data = useActionData<typeof action>();
 
   return (
     <div className='px-[7.5rem] py-[5rem] flex flex-col gap-5'>
@@ -136,7 +125,11 @@ export default function Signin() {
             Akses layanan kami dengan masuk ke akun Anda.
           </p>
         </div>
-        <Form className='flex flex-col gap-4' method='post'>
+        <Form
+          className='flex flex-col gap-4'
+          method='post'
+          onSubmit={handleSubmit}
+        >
           <InputText
             label='Email'
             isHookForm
@@ -144,7 +137,7 @@ export default function Signin() {
             type='email'
             placeholder='Masukan email'
             controlName='email'
-            error={data?.errors?.email}
+            error={errors?.email?.message}
           />
           <InputPassword
             label='Password'
@@ -152,7 +145,7 @@ export default function Signin() {
             control={control}
             placeholder='Masukan password'
             controlName='password'
-            error={data?.errors?.password}
+            error={errors?.password?.message}
           />
           <Link
             className='text-base-700 font-semibold text-end'

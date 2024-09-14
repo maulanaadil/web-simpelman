@@ -5,8 +5,6 @@ import { ArrowRight2 } from 'iconsax-react';
 import LogoIcon from '~/assets/icons/logo';
 import Button from '~/components/button';
 import DistrictOfficeCard from '~/components/district-office-card';
-import Footer from '~/layouts/footer';
-import Header from '~/layouts/header';
 import { MainLayout } from '~/layouts/main';
 import { prisma } from '~/services/db.server';
 import { sessionStorage } from '~/services/session.server';
@@ -84,11 +82,11 @@ function Hero() {
             className='bg-base-50 text-base-900 hover:bg-base-300 disabled:bg-base-50'
           />
           <Button
-            text='Bantuan'
+            text='Tentang'
             variant='outline'
             onClick={() =>
               navigate({
-                pathname: '/help',
+                pathname: '/about',
               })
             }
             className='bg-transparent border border-base-50 text-base-50 hover:border-base-300 hover:text-base-300 disabled:border-base-300 disabled:text-base-300'
