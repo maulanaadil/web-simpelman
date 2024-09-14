@@ -1,12 +1,13 @@
 {
   "include": [
-    "**/*.ts",
-    "**/*.tsx",
+    "**/**/*.ts",
+    "**/**/*.tsx",
     "**/.server/**/*.ts",
     "**/.server/**/*.tsx",
     "**/.client/**/*.ts",
     "**/.client/**/*.tsx",
-    "**/.prisma/**/*.ts"
+    "**/.prisma/**/*.ts",
+    "app/**/*"
   ],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],

@@ -8,7 +8,7 @@ export const pages = [
     label: 'Layanan',
   },
   {
-    route: '/activity',
-    label: 'Kegiatan',
+    route: '/about',
+    label: 'Tentang',
   },
 ];

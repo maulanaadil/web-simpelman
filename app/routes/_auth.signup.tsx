@@ -1,25 +1,23 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { ActionFunctionArgs } from '@remix-run/node';
 import {
   Form,
   json,
-  useActionData,
   useNavigate,
-  useNavigation,
+  useNavigation
 } from '@remix-run/react';
 import bcrypt from 'bcryptjs';
 import { BackSquare } from 'iconsax-react';
+import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
 import { redirectWithSuccess } from 'remix-toast';
 import { z } from 'zod';
 import Button from '~/components/button';
 import InputPassword from '~/components/input-password';
 import InputText from '~/components/input-text';
-import useCustomForm from '~/hooks/useCustomForm';
 import { prisma } from '~/services/db.server';
 import {
-  ActionErrors,
-  validateAction,
   validatePassword,
-  validatePhoneNumber,
+  validatePhoneNumber
 } from '~/utils/common/validate';
 
 const schema = z.object({
@@ -37,20 +35,14 @@ const schema = z.object({
 
 export type SignUpSchema = z.infer<typeof schema>;
 
-type ActionSignUp = Partial<
-  SignUpSchema & {
-    errors: ActionErrors<SignUpSchema> | null;
-  }
->;
-
 export async function action({ request }: ActionFunctionArgs) {
-  const { formData, errors } = await validateAction<SignUpSchema>({
+  const { data, errors } = await getValidatedFormData<SignUpSchema>(
     request,
-    schema,
-  });
+    zodResolver(schema)
+  );
 
   if (errors) {
-    return json<ActionSignUp>(
+    return json(
       {
         email: undefined,
         password: undefined,
@@ -63,7 +55,7 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   }
 
-  const { email, password, idCard, name, phoneNumber } = formData;
+  const { email, password, idCard, name, phoneNumber } = data;
 
   const [user, idCardUser, _phoneNumber] = await prisma.$transaction([
     prisma.user.findUnique({
@@ -84,7 +76,7 @@ export async function action({ request }: ActionFunctionArgs) {
   ]);
 
   if (user) {
-    return json<ActionSignUp>(
+    return json(
       {
         email: undefined,
         password: undefined,
@@ -92,7 +84,9 @@ export async function action({ request }: ActionFunctionArgs) {
         phoneNumber: undefined,
         name: undefined,
         errors: {
-          email: 'Email sudah terdaftar',
+          email: {
+            message: 'Email sudah terdaftar',
+          },
         },
       },
       {
@@ -102,7 +96,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   if (idCardUser) {
-    return json<ActionSignUp>(
+    return json(
       {
         email: undefined,
         password: undefined,
@@ -110,7 +104,9 @@ export async function action({ request }: ActionFunctionArgs) {
         phoneNumber: undefined,
         name: undefined,
         errors: {
-          idCard: 'Nomor KTP sudah terdaftar',
+          idCard: {
+            message: 'Nomor KTP sudah terdaftar',
+          },
         },
       },
       {
@@ -120,7 +116,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   if (_phoneNumber) {
-    return json<ActionSignUp>(
+    return json(
       {
         email: undefined,
         password: undefined,
@@ -128,7 +124,9 @@ export async function action({ request }: ActionFunctionArgs) {
         phoneNumber: undefined,
         name: undefined,
         errors: {
-          phoneNumber: 'Nomor HP sudah terdaftar',
+          phoneNumber: {
+            message: 'Nomor HP sudah terdaftar',
+          },
         },
       },
       {
@@ -156,17 +154,15 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function Signup() {
   const navigate = useNavigate();
-  const data = useActionData<ActionSignUp>();
   const navigation = useNavigation();
 
-  const { control } = useCustomForm<SignUpSchema>({
-    defaultValues: {
-      name: '',
-      email: '',
-      idCard: '',
-      phoneNumber: '',
-      password: '',
-    },
+  const {
+    handleSubmit,
+    formState: { errors },
+    control,
+  } = useRemixForm<SignUpSchema>({
+    mode: 'onSubmit',
+    resolver: zodResolver(schema),
   });
 
   return (
@@ -189,14 +185,18 @@ export default function Signup() {
             Akses layanan kami dengan daftar ke akun anda
           </p>
         </div>
-        <Form className='flex flex-col gap-2' method='post'>
+        <Form
+          className='flex flex-col gap-2'
+          method='post'
+          onSubmit={handleSubmit}
+        >
           <InputText
             label='Nama'
             isHookForm
             control={control}
             placeholder='Masukan nama lengkap'
             controlName='name'
-            error={data?.errors?.name}
+            error={errors?.name?.message}
           />
           <InputText
             label='Email'
@@ -205,7 +205,7 @@ export default function Signup() {
             control={control}
             placeholder='Masukan email'
             controlName='email'
-            error={data?.errors?.email}
+            error={errors?.email?.message}
           />
           <InputText
             label='Nomor KTP'
@@ -213,7 +213,7 @@ export default function Signup() {
             control={control}
             placeholder='Masukan nomor KTP'
             controlName='idCard'
-            error={data?.errors?.idCard}
+            error={errors?.idCard?.message}
           />
           <InputText
             label='No Handphone'
@@ -228,7 +228,7 @@ export default function Signup() {
                 +62
               </div>
             }
-            error={data?.errors?.phoneNumber}
+            error={errors?.phoneNumber?.message}
           />
           <InputPassword
             label='Password'
@@ -237,7 +237,7 @@ export default function Signup() {
             placeholder='Masukan password'
             description='Password harus memiliki setidaknya satu huruf besar dan karakter unik'
             controlName='password'
-            error={data?.errors?.password}
+            error={errors?.password?.message}
           />
           <Button
             type='submit'

@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { garden } from './prebuilt';
+import { garden, graveyard } from './prebuilt';
 const prisma = new PrismaClient();
 
 async function main() {
@@ -15,7 +15,18 @@ async function main() {
 
   garden.forEach(async (data) => {
     await prisma.garden.create({
-      data,
+      data: {
+        ...data,
+      },
+    });
+  });
+
+  graveyard.forEach(async (data) => {
+    await prisma.graveyard.create({
+      data: {
+        ...data,
+        additionalInfo: {},
+      },
     });
   });
 

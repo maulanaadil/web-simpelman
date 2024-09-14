@@ -1,4 +1,4 @@
-import { Garden } from '@prisma/client';
+import { Garden, Graveyard } from '@prisma/client';
 
 export const garden: Omit<Garden, 'id' | 'createdAt' | 'updatedAt'>[] = [
   {
@@ -49,5 +49,96 @@ export const garden: Omit<Garden, 'id' | 'createdAt' | 'updatedAt'>[] = [
       'Jl. Raya Soreang-Ciwidey No.126, Soreang, Kec. Soreang, Kabupaten Bandung, Jawa Barat 40911',
     imageUrl: '/images/garden/taman-buah.jpg',
     type: 'pemda',
+  },
+];
+
+export const graveyard: Omit<Graveyard, 'id' | 'createdAt' | 'updatedAt'>[] = [
+  {
+    name: 'TPU Nagreg',
+    mapsUrl: 'https://maps.app.goo.gl/pbwPSb9h9hK9S6uM7',
+    address:
+      'Jl. Raya Soreang-Ciwidey No.126, Sor eang, Kec. Soreang, Kabupaten Bandung, Jawa Barat 40911',
+    imageUrl: '/images/graveyard/tpu-eige.jpg',
+    numberOfGrave: 100,
+    religion: 'muslim',
+    type: 'biasa',
+    additionalInfo: {},
+  },
+  {
+    name: 'TPU arjasari',
+    mapsUrl: 'https://maps.app.goo.gl/giPBA9BCiguAkSHr8',
+    address:
+      'Jl. Raya Soreang-Ciwidey No.126, Sor eang, Kec. Soreang, Kabupaten Bandung, Jawa Barat 40911',
+    imageUrl: '/images/graveyard/tpu-arjasari.jpg',
+    numberOfGrave: 100,
+    religion: 'muslim',
+    type: 'biasa',
+    additionalInfo: {},
+  },
+  {
+    name: 'TPU Cikoneng',
+    mapsUrl: 'https://maps.app.goo.gl/nAmV3k6d3bzn3rvo8',
+    address:
+      'Jl. Raya Soreang-Ciwidey No.126, Sor eang, Kec. Soreang, Kabupaten Bandung, Jawa Barat 40911',
+    imageUrl: '/images/graveyard/tpu-cikoneng.jpg',
+    numberOfGrave: 100,
+    religion: 'muslim',
+    type: 'biasa',
+    additionalInfo: {},
+  },
+  {
+    name: 'TPU Tegalluar',
+    mapsUrl: 'https://maps.app.goo.gl/FhAboPFvn2YB3VKj7',
+    address:
+      'Jl. Raya Soreang-Ciwidey No.126, Sor eang, Kec. Soreang, Kabupaten Bandung, Jawa Barat 40911',
+    imageUrl: '/images/graveyard/tpu-tegalluar.jpg',
+    numberOfGrave: 100,
+    religion: 'muslim',
+    type: 'biasa',
+    additionalInfo: {},
+  },
+  {
+    name: 'TPU Daraulin',
+    mapsUrl: 'https://maps.app.goo.gl/TXf2ztfZVTpbrK3o9',
+    address:
+      'Jl. Raya Soreang-Ciwidey No.126, Sor eang, Kec. Soreang, Kabupaten Bandung, Jawa Barat 40911',
+    imageUrl: '/images/graveyard/tpu-daraulin.jpg',
+    numberOfGrave: 100,
+    religion: 'muslim',
+    type: 'biasa',
+    additionalInfo: {},
+  },
+  {
+    name: 'TPU Pananjung',
+    mapsUrl: 'https://maps.app.goo.gl/8hQhfMGVqmgQxYzj7',
+    address:
+      'Jl. Raya Soreang-Ciwidey No.126, Sor eang, Kec. Soreang, Kabupaten Bandung, Jawa Barat 40911',
+    imageUrl: '/images/graveyard/tpu-pananjung.jpg',
+    numberOfGrave: 100,
+    religion: 'muslim',
+    type: 'biasa',
+    additionalInfo: {},
+  },
+  {
+    name: 'TPU Baruteok',
+    mapsUrl: 'https://maps.app.goo.gl/eMwYRjC5kr3urAXA9',
+    address:
+      'Jl. Raya Soreang-Ciwidey No.126, Sor eang, Kec. Soreang, Kabupaten Bandung, Jawa Barat 40911',
+    imageUrl: '/images/graveyard/tpu-baruteok.jpg',
+    numberOfGrave: 100,
+    religion: 'muslim',
+    type: 'biasa',
+    additionalInfo: {},
+  },
+  {
+    name: 'TPU Haminteu',
+    mapsUrl: 'https://maps.app.goo.gl/W3JMETAabvjA2D4r9',
+    address:
+      'Jl. Raya Soreang-Ciwidey No.126, Sor eang, Kec. Soreang, Kabupaten Bandung, Jawa Barat 40911',
+    imageUrl: '/images/graveyard/tpu-haminteu.jpg',
+    numberOfGrave: 100,
+    religion: 'muslim',
+    type: 'biasa',
+    additionalInfo: {},
   },
 ];
