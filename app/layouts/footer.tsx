@@ -11,10 +11,13 @@ export default function Footer() {
             <div className='flex flex-col gap-[1.125rem]'>
               <p className='text-base-900 text-sm text-medium'>Layanan</p>
               <div className='flex flex-col gap-2'>
-                <Link to={'/garden'} className='text-sm text-base-400'>
+                <Link to={'/sevices/garden'} className='text-sm text-base-400'>
                   Pertamanan
                 </Link>
-                <Link to={'/graveyard'} className='text-sm text-base-400'>
+                <Link
+                  to={'/sevices/graveyard'}
+                  className='text-sm text-base-400'
+                >
                   Pemakaman
                 </Link>
               </div>
@@ -22,10 +25,10 @@ export default function Footer() {
             <div className='flex flex-col gap-[1.125rem]'>
               <p className='text-base-900 text-sm text-medium'>Informasi</p>
               <div className='flex flex-col gap-2'>
-                <Link to={'/info-garden'} className='text-sm text-base-400'>
+                <Link to={'#'} className='text-sm text-base-400'>
                   Informasi Pertamanan
                 </Link>
-                <Link to={'/info-graveyard'} className='text-sm text-base-400'>
+                <Link to={'#'} className='text-sm text-base-400'>
                   Informasi Pemakaman
                 </Link>
               </div>

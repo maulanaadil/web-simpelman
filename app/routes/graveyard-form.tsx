@@ -14,7 +14,7 @@ import { Form, useFetcher, useLoaderData, useNavigate } from '@remix-run/react';
 import dayjs from 'dayjs';
 import { BackSquare } from 'iconsax-react';
 import { CalendarIcon, Check } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { FormEvent, useEffect, useState } from 'react';
 import {
   Control,
   Controller,
@@ -24,6 +24,7 @@ import {
 } from 'react-hook-form';
 import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
 import { redirectWithError, redirectWithSuccess } from 'remix-toast';
+import { toast } from 'sonner';
 import { z } from 'zod';
 import Button from '~/components/button';
 import InputText from '~/components/input-text';
@@ -114,10 +115,13 @@ const schema = z.object({
   neighborhood: z.string(),
   ktpUrl: z.custom<UploadValue>(
     (value) => {
-      if (!value.url) {
-        return false;
+      if (value) {
+        if (!value.url) {
+          return false;
+        }
+        return true;
       }
-      return true;
+      return false;
     },
     {
       message: 'File KTP Ahli Waris harus diisi',
@@ -125,10 +129,13 @@ const schema = z.object({
   ),
   certificateUrl: z.custom<UploadValue>(
     (value) => {
-      if (!value.url) {
-        return false;
+      if (value) {
+        if (!value.url) {
+          return false;
+        }
+        return true;
       }
-      return true;
+      return false;
     },
     {
       message: 'File KTP Ahli Waris harus diisi',
@@ -150,10 +157,13 @@ const schema = z.object({
   heirsNeighborhood: z.string(),
   heirsKtpUrl: z.custom<UploadValue>(
     (value) => {
-      if (!value.url) {
-        return false;
+      if (value) {
+        if (!value.url) {
+          return false;
+        }
+        return true;
       }
-      return true;
+      return false;
     },
     {
       message: 'File KTP Ahli Waris harus diisi',
@@ -401,6 +411,14 @@ export default function GraveyardForm() {
     resolver: zodResolver(schema),
   });
 
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    if (!!errors) {
+      toast.info('Terdapat error pada input');
+    }
+
+    return handleSubmit(e);
+  };
+
   return (
     <div className='w-full h-full bg-base-50'>
       <div className='container py-[4.375rem]'>
@@ -417,11 +435,7 @@ export default function GraveyardForm() {
             Kembali ke halaman utama
           </p>
         </button>
-        <Form
-          onSubmit={handleSubmit}
-          method='post'
-          encType='multipart/form-data'
-        >
+        <Form onSubmit={onSubmit} method='post' encType='multipart/form-data'>
           <Steps checkedStep={checkedState} step={step} />
           {step === 1 ? (
             <StepOne
@@ -798,7 +812,7 @@ function StepThree({
                       }}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder='Pilih provinsi' />
+                        <SelectValue placeholder='Pilih kecamatan' />
                       </SelectTrigger>
                       <SelectContent>
                         {fetcher.data?.regencyOptions?.map((regency) => (
@@ -833,7 +847,7 @@ function StepThree({
                       onValueChange={(value) => field.onChange(value)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder='Pilih provinsi' />
+                        <SelectValue placeholder='Pilih kelurahan' />
                       </SelectTrigger>
                       <SelectContent>
                         {fetcher.data?.neighborhoodOptions?.map(
@@ -1209,7 +1223,7 @@ function StepTwo({
                       }}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder='Pilih provinsi' />
+                        <SelectValue placeholder='Pilih kecamatan' />
                       </SelectTrigger>
                       <SelectContent>
                         {fetcher.data?.regencyOptions?.map((regency) => (
@@ -1244,7 +1258,7 @@ function StepTwo({
                       onValueChange={(value) => field.onChange(value)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder='Pilih provinsi' />
+                        <SelectValue placeholder='Pilih kelurahan' />
                       </SelectTrigger>
                       <SelectContent>
                         {fetcher.data?.neighborhoodOptions?.map(
@@ -1536,7 +1550,7 @@ function StepOne({
                   onValueChange={(value) => field.onChange(value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder='Pilih jenis pemakaman' />
+                    <SelectValue placeholder='Pilih agama' />
                   </SelectTrigger>
                   <SelectContent>
                     {religionOptions.map((type) => (
