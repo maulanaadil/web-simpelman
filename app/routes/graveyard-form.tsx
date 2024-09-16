@@ -10,11 +10,17 @@ import {
   unstable_createMemoryUploadHandler,
   unstable_parseMultipartFormData,
 } from '@remix-run/node';
-import { Form, useFetcher, useLoaderData, useNavigate } from '@remix-run/react';
+import {
+  Form,
+  useFetcher,
+  useLoaderData,
+  useNavigate,
+  useSubmit,
+} from '@remix-run/react';
 import dayjs from 'dayjs';
 import { BackSquare } from 'iconsax-react';
 import { CalendarIcon, Check } from 'lucide-react';
-import React, { FormEvent, useEffect, useState } from 'react';
+import React, { FormEvent, useEffect, useRef, useState } from 'react';
 import {
   Control,
   Controller,
@@ -396,6 +402,8 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function GraveyardForm() {
   const navigate = useNavigate();
+  const formRef = useRef<HTMLFormElement>(null);
+
   const { graveyards, provinceOptions } = useLoaderData<LoaderData>();
   const [step, setStep] = useState(STEPS[0].step);
   const [checkedState, setCheckedState] = useState<number[]>([]);
@@ -409,6 +417,43 @@ export default function GraveyardForm() {
   } = useRemixForm<FormSchema>({
     mode: 'onSubmit',
     resolver: zodResolver(schema),
+    defaultValues: {
+      type: '',
+      religion: '',
+      additionalInfo: [],
+      address: '',
+      numberOfGrave: 0,
+      name: '',
+      fatherInLawName: '',
+      burialDate: new Date(),
+      homeNumber: '',
+      street: '',
+      certificateUrl: undefined,
+      city: '',
+      district: '',
+      dateOfBirth: new Date(),
+      dateOfDeath: new Date(),
+      Gender: 'male',
+      heirsCity: '',
+      graveyard: '',
+      heirsDistrict: '',
+      heirsHomeNumber: '',
+      heirsIdCard: '',
+      heirsJob: '',
+      heirsKtpUrl: undefined,
+      heirsName: '',
+      heirsNeighborhood: '',
+      heirsPhoneNumber: '',
+      heirsProvince: '',
+      heirsRt: '',
+      heirsRw: '',
+      isHeirsAddressSame: false,
+      ktpUrl: undefined,
+      placeOfBirth: '',
+      province: '',
+      rt: '',
+      rw: '',
+    },
   });
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -435,7 +480,12 @@ export default function GraveyardForm() {
             Kembali ke halaman utama
           </p>
         </button>
-        <Form onSubmit={onSubmit} method='post' encType='multipart/form-data'>
+        <Form
+          ref={formRef}
+          onSubmit={onSubmit}
+          method='post'
+          encType='multipart/form-data'
+        >
           <Steps checkedStep={checkedState} step={step} />
           {step === 1 ? (
             <StepOne
@@ -465,6 +515,7 @@ export default function GraveyardForm() {
               <Button
                 text='Kembali'
                 variant='outline'
+                type='button'
                 onClick={() => {
                   setStep(step - 1);
                   setCheckedState(checkedState.filter((step) => step !== step));
@@ -472,20 +523,17 @@ export default function GraveyardForm() {
               />
             )}
             <Button
-              type={step === 3 ? 'submit' : 'button'}
+              type='button'
               text={step === 3 ? 'Simpan Data' : 'Lanjutkan'}
-              onClick={() => {
-                if (step === 1) {
+              onClick={(e) => {
+                if (step === 1 || step === 2) {
                   setStep(step + 1);
                   setCheckedState([...checkedState, step]);
                   return;
-                } else if (step === 2) {
-                  setStep(step + 1);
-                  setCheckedState([...checkedState, step]);
-                  setValue('intent', 'SAVE_FORM');
-                  return;
-                } else if (step === 3) {
-                  return;
+                } else {
+                  formRef.current?.dispatchEvent(
+                    new Event('submit', { cancelable: true, bubbles: true })
+                  );
                 }
               }}
             />

@@ -58,7 +58,7 @@ model Deceased {
   id              String      @id @default(uuid())
   name            String
   fatherInLawName String
-  idCard          String @unique
+  idCard          String 
   Gender          Gender
   placeOfBirth    String
   dateOfBirth     DateTime
@@ -76,7 +76,7 @@ model Deceased {
 model Heirs {
   id           String      @id @default(uuid())
   name         String
-  idCard       String      @unique
+  idCard       String     
   phoneNumber  String      
   job          String
   addressDetail AddressDetail?
