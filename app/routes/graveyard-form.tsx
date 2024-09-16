@@ -175,7 +175,6 @@ const schema = z.object({
       message: 'File KTP Ahli Waris harus diisi',
     }
   ),
-  intent: z.string(),
 });
 
 type FormSchema = z.infer<typeof schema>;
@@ -240,7 +239,6 @@ export async function action({ request }: ActionFunctionArgs) {
     )
   );
 
-  const intent = formData.get('intent');
   const file = formData.get('file');
 
   if (file) {
