@@ -1,13 +1,13 @@
-import { Garden, User } from '@prisma/client';
+import { Garden } from '@prisma/client';
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
 import { json, useLoaderData, useNavigate } from '@remix-run/react';
 import { ArrowRight2 } from 'iconsax-react';
 import LogoIcon from '~/assets/icons/logo';
 import Button from '~/components/button';
 import DistrictOfficeCard from '~/components/district-office-card';
+import { sevices } from '~/constants/services';
 import { MainLayout } from '~/layouts/main';
 import { prisma } from '~/services/db.server';
-import { sessionStorage } from '~/services/session.server';
 
 export const meta: MetaFunction = () => {
   return [
@@ -16,16 +16,7 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-type LoaderData = {
-  user: Pick<User, 'email' | 'name'>;
-  garden: Omit<Garden, 'createdAt' | 'updatedAt'>[];
-};
-
 export async function loader({ request }: LoaderFunctionArgs) {
-  const cookieString = request.headers.get('Cookie');
-
-  const user = (await sessionStorage.parse(cookieString)) as LoaderData['user'];
-
   const garden = await prisma.garden.findMany({
     take: 3,
     orderBy: {
@@ -33,14 +24,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
   });
 
-  return json<LoaderData>({ user, garden });
+  return json({ garden });
 }
 
 export default function Index() {
-  const { user, garden } = useLoaderData<LoaderData>();
+  const { garden } = useLoaderData<typeof loader>();
 
   return (
-    <MainLayout user={user}>
+    <MainLayout>
       <Hero />
       <Services />
       <Information garden={garden} />
@@ -120,58 +111,45 @@ export function Services() {
         </div>
       </div>
       <div className='mt-16 flex gap-4 items-center justify-center'>
-        <div className='p-5 rounded-xl border border-base-300 bg-base-50 flex items-center gap-10'>
-          <div className='w-56 h-44 overflow-clip rounded-lg'>
-            <img
-              src='/images/tpu-default.jpg'
-              alt='tpu'
-              className='w-full h-full object-cover'
-            />
-          </div>
-          <div className='flex flex-col justify-between gap-10'>
-            <div className='flex flex-col gap-1'>
-              <p className='text-2xl font-semibold text-neutral-800'>
-                Pemakaman Baru
-              </p>
-              <p className='text-neutral-400'>
-                Layanan Reservasi Pemakaman Baru Daerah Kabupaten Bandung
-              </p>
+        {sevices.map((service) => (
+          <div
+            key={service.title}
+            className='p-5 group rounded-xl border border-base-300 hover:bg-primary-500 bg-base-50 flex items-center gap-10 transition-all group-hover:transition-all'
+          >
+            <div className='w-56 h-44 overflow-clip rounded-lg'>
+              <img
+                src={service.image}
+                alt='tpu'
+                className='w-full h-full object-cover'
+              />
             </div>
-            <Button
-              text='Selengkapnya'
-              onClick={() => navigate({ pathname: '/services/graveyard' })}
-            />
-          </div>
-        </div>
-        <div className='p-5 rounded-xl border border-base-300 bg-base-50 flex items-center gap-10'>
-          <div className='w-56 h-44 overflow-clip rounded-lg'>
-            <img
-              src='/images/garden-default.jpg'
-              alt='tpu'
-              className='w-full h-full object-cover'
-            />
-          </div>
-          <div className='flex flex-col justify-between gap-10'>
-            <div className='flex flex-col gap-1'>
-              <p className='text-2xl font-semibold text-neutral-800'>
-                Pertamanan
-              </p>
-              <p className='text-neutral-400'>
-                Layanan Informasi Pertamanan dan aduan masyarakat
-              </p>
+            <div className='flex flex-col justify-between gap-10'>
+              <div className='flex flex-col gap-1'>
+                <p className='text-2xl font-semibold text-neutral-800 group-hover:text-base-50'>
+                  {service.title}
+                </p>
+                <p className='text-neutral-400 group-hover:text-base-50'>
+                  {service.description}
+                </p>
+              </div>
+              <Button
+                text='Selengkapnya'
+                className='group-hover:bg-base-50 group-hover:text-primary-500'
+                onClick={() => navigate({ pathname: service.route })}
+              />
             </div>
-            <Button
-              text='Selengkapnya'
-              onClick={() => navigate({ pathname: '/services/garden' })}
-            />
           </div>
-        </div>
+        ))}
       </div>
     </div>
   );
 }
 
-export function Information({ garden }: { garden: LoaderData['garden'] }) {
+export function Information({
+  garden,
+}: {
+  garden: Omit<Garden, 'createdAt' | 'updatedAt'>[];
+}) {
   const navigate = useNavigate();
   return (
     <div className='container py-[3.5rem]'>

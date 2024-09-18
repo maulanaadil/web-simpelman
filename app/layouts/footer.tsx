@@ -47,7 +47,7 @@ export default function Footer() {
         <div className='w-full h-[1px] bg-base-700/20'></div>
 
         <div className='py-5 text-base-700 text-sm'>
-          © 2024 Copyright, Diperkimtan
+          © 2024 Copyright, Disperkimtan
         </div>
       </div>
     </div>

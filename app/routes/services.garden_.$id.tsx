@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { Garden, User } from '@prisma/client';
+import type { Garden } from '@prisma/client';
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from '@remix-run/node';
 import { Form, useLoaderData } from '@remix-run/react';
 import { Controller } from 'react-hook-form';
@@ -20,10 +20,8 @@ import { Textarea } from '~/components/ui/textarea';
 import { complaints } from '~/constants/feedback';
 import { MainLayout } from '~/layouts/main';
 import { prisma } from '~/services/db.server';
-import { sessionStorage } from '~/services/session.server';
 
 type LoaderData = {
-  user: Pick<User, 'email' | 'name'>;
   garden: Omit<Garden, 'createdAt' | 'updatedAt'> | null;
 };
 
@@ -43,17 +41,13 @@ const schema = z.object({
 type FeedbackSchema = z.infer<typeof schema>;
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-  const cookieString = request.headers.get('Cookie');
-
-  const user = (await sessionStorage.parse(cookieString)) as LoaderData['user'];
-
   const garden = await prisma.garden.findUnique({
     where: {
       id: params.id,
     },
   });
 
-  return json<LoaderData>({ user, garden });
+  return json({ garden });
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -97,10 +91,10 @@ export default function GardenDetail() {
     mode: 'onSubmit',
     resolver: zodResolver(schema),
   });
-  const { user, garden } = useLoaderData<LoaderData>();
+  const { garden } = useLoaderData<LoaderData>();
 
   return (
-    <MainLayout user={user}>
+    <MainLayout>
       <Banner
         title={garden?.name || ''}
         subtitle={

@@ -8,6 +8,10 @@ export const pages = [
     label: 'Layanan',
   },
   {
+    route: '/dashboard',
+    label: 'Dashboard',
+  },
+  {
     route: '/about',
     label: 'Tentang',
   },

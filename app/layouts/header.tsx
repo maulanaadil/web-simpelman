@@ -16,35 +16,41 @@ import {
   PopoverTrigger,
 } from '~/components/ui/popover';
 import { pages } from '~/constants/pages';
+import { getLocalStorage } from '~/utils/common/localStorage';
 import { cn } from '~/utils/common/styles';
 
-type Props = {
-  user: Pick<User, 'name' | 'email'>;
-};
-
-export default function Header({ user }: Props) {
+export default function Header() {
   const location = useLocation();
   const navigate = useNavigate();
+
+  const user = getLocalStorage('user') as User;
 
   return (
     <div className='bg-base-200 w-full'>
       <div className='container py-4 flex justify-between w-full'>
         <Logo />
         <div className='flex justify-center items-center gap-10'>
-          {pages.map((page) => (
-            <Link
-              key={page.route}
-              className={cn(
-                'p-2.5 transition-all font-semibold text-base-900 overflow-clip',
-                location.pathname === page.route
-                  ? 'text-primary-500  pointer-events-none'
-                  : "text-base-900 cursor-pointer relative w-fit block after:block after:content-[''] after:absolute after:h-[2px] after:bg-primary-500 after:w-full after:scale-x-0 after:hover:scale-x-75 after:transition after:duration-300 after:origin-left "
-              )}
-              to={page.route}
-            >
-              {page.label}
-            </Link>
-          ))}
+          {pages
+            .filter((page) => {
+              if (user && user.role !== 'admin') {
+                return page.route !== '/dashboard';
+              }
+              return true;
+            })
+            .map((page) => (
+              <Link
+                key={page.route}
+                className={cn(
+                  'p-2.5 transition-all font-semibold text-base-900 overflow-clip',
+                  location.pathname === page.route
+                    ? 'text-primary-500  pointer-events-none'
+                    : "text-base-900 cursor-pointer relative w-fit block after:block after:content-[''] after:absolute after:h-[2px] after:bg-primary-500 after:w-full after:scale-x-0 after:hover:scale-x-75 after:transition after:duration-300 after:origin-left "
+                )}
+                to={page.route}
+              >
+                {page.label}
+              </Link>
+            ))}
         </div>
         {user ? (
           <Popover>
@@ -55,7 +61,7 @@ export default function Header({ user }: Props) {
                 <ArrowDown2 size='24' color='#232323' />
               </div>
             </PopoverTrigger>
-            <PopoverContent className='w-[14rem]'>
+            <PopoverContent className='w-[16rem]'>
               <ProfileDropdown />
             </PopoverContent>
           </Popover>
@@ -76,16 +82,20 @@ export default function Header({ user }: Props) {
 
 function ProfileDropdown() {
   return (
-    <div className='flex flex-col gap-3 w-fit'>
-      <Link className='block p-3' to='/profile'>
-        Profile
+    <div className='w-full flex flex-col gap-3'>
+      <Link
+        className='block p-3 w-full border hover:border-primary-500 transition-all rounded-lg border-base-50'
+        to='/history'
+      >
+        Riwayat
       </Link>
       <Form method='post' action='/logout'>
         <button
           type='submit'
-          className='block p-3 text-danger-500 cursor-pointer'
+          onClick={() => localStorage.clear()}
+          className=' block p-3 text-danger-500 cursor-pointer border border-danger-500 w-full rounded-lg'
         >
-          Logout
+          Keluar
         </button>
       </Form>
     </div>

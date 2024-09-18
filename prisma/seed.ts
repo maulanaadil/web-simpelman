@@ -10,6 +10,7 @@ async function main() {
       password: 'admin123',
       idCard: '1234567890',
       phoneNumber: '81234567890',
+      role: 'admin',
     },
   });
 

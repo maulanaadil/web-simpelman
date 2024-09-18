@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Gender, Graveyard } from '@prisma/client';
+import { Gender, Graveyard, User } from '@prisma/client';
 import {
   ActionFunctionArgs,
   json,
@@ -64,6 +64,8 @@ import {
   Province,
 } from '~/services/api/wilayahIndonesia';
 import { prisma } from '~/services/db.server';
+import { sessionStorage } from '~/services/session.server';
+import { getCookie } from '~/utils/common/cookies';
 import { cn } from '~/utils/common/styles';
 
 const STEPS = [
@@ -222,6 +224,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
+  const user = await getCookie({ request });
+
   const formData = await unstable_parseMultipartFormData(
     request,
     unstable_composeUploadHandlers(
@@ -296,6 +300,7 @@ export async function action({ request }: ActionFunctionArgs) {
         dateOfDeath: data.dateOfDeath,
         burialDate: data.burialDate,
         graveyardId: data.graveyard,
+        userId: user?.id,
         additionalInfo: data.additionalInfo || {},
       },
     }),
@@ -416,51 +421,13 @@ export default function GraveyardForm() {
     mode: 'onSubmit',
     resolver: zodResolver(schema),
     defaultValues: {
-      type: '',
-      religion: '',
-      additionalInfo: [],
-      address: '',
-      numberOfGrave: 0,
-      name: '',
-      fatherInLawName: '',
-      burialDate: new Date(),
-      homeNumber: '',
-      street: '',
-      certificateUrl: undefined,
-      city: '',
-      district: '',
-      dateOfBirth: new Date(),
-      dateOfDeath: new Date(),
-      Gender: 'male',
-      heirsCity: '',
-      graveyard: '',
-      heirsDistrict: '',
-      heirsHomeNumber: '',
-      heirsIdCard: '',
-      heirsJob: '',
-      heirsKtpUrl: undefined,
-      heirsName: '',
-      heirsNeighborhood: '',
-      heirsPhoneNumber: '',
-      heirsProvince: '',
-      heirsRt: '',
-      heirsRw: '',
-      isHeirsAddressSame: false,
-      ktpUrl: undefined,
-      placeOfBirth: '',
-      province: '',
-      rt: '',
-      rw: '',
+      dateOfBirth: new Date(2000, 8, 1),
+      burialDate: new Date(2024, 5, 1),
+      dateOfDeath: new Date(2024, 5, 1),
     },
   });
 
-  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    if (!!errors) {
-      toast.info('Terdapat error pada input');
-    }
-
-    return handleSubmit(e);
-  };
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => handleSubmit(e);
 
   return (
     <div className='w-full h-full bg-base-50'>
@@ -1085,7 +1052,7 @@ function StepTwo({
                     <Calendar
                       mode='single'
                       captionLayout='dropdown'
-                      defaultMonth={new Date(1978, 8)}
+                      defaultMonth={new Date(2000, 8, 1)}
                       selected={field.value}
                       onSelect={field.onChange}
                       initialFocus
@@ -1362,10 +1329,11 @@ function StepTwo({
                   <PopoverContent className='w-auto p-0' align='start'>
                     <Calendar
                       mode='single'
+                      defaultMonth={new Date(2024, 5, 1)}
                       selected={field.value}
                       onSelect={field.onChange}
                       disabled={(date) =>
-                        date > new Date() || date < new Date('1900-01-01')
+                        watch('dateOfBirth') > date || date > new Date()
                       }
                       initialFocus
                     />
@@ -1402,9 +1370,10 @@ function StepTwo({
                     <Calendar
                       mode='single'
                       selected={field.value}
+                      defaultMonth={new Date(2024, 5, 1)}
                       onSelect={field.onChange}
                       disabled={(date) =>
-                        date > new Date() || date < new Date('1900-01-01')
+                        watch('dateOfDeath') > date || date > new Date()
                       }
                       initialFocus
                     />

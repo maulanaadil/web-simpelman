@@ -7,31 +7,28 @@ import { MainLayout } from '~/layouts/main';
 import { sessionStorage } from '~/services/session.server';
 import { Information } from './_index';
 import { prisma } from '~/services/db.server';
+import { getCookie } from '~/utils/common/cookies';
 
 type LoaderData = {
-  user: Pick<User, 'email' | 'name'>;
   garden: Omit<Garden, 'createdAt' | 'updatedAt'>[];
 };
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const cookieString = request.headers.get('Cookie');
-
-  const user = (await sessionStorage.parse(cookieString)) as LoaderData['user'];
-
+  const user = await getCookie({ request });
   const garden = await prisma.garden.findMany({
     orderBy: {
       createdAt: 'desc',
     },
   });
 
-  return json<LoaderData>({ user, garden });
+  return json({ garden });
 }
 
 export default function Garden() {
-  const { user, garden } = useLoaderData<LoaderData>();
+  const { garden } = useLoaderData<LoaderData>();
 
   return (
-    <MainLayout user={user}>
+    <MainLayout>
       <Banner
         title='Pertamanan'
         subtitle='Layanan Informasi Pertamanan dan Saran '

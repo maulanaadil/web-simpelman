@@ -24,10 +24,7 @@ type SignInSchema = z.infer<typeof schema>;
 export async function loader({ request }: LoaderFunctionArgs) {
   const cookieString = request.headers.get('Cookie');
 
-  const user = (await sessionStorage.parse(cookieString)) as Pick<
-    User,
-    'email' | 'name'
-  >;
+  const user = (await sessionStorage.parse(cookieString)) as User;
 
   if (user) {
     return redirectWithInfo('/', {
@@ -61,8 +58,11 @@ export async function action({ request }: ActionFunctionArgs) {
       email: data.email,
     },
     select: {
-      name: true,
+      id: true,
       email: true,
+      name: true,
+      password: true,
+      role: true,
     },
   });
 

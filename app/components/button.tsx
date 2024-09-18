@@ -1,4 +1,5 @@
 import { cn } from '~/utils/common/styles';
+import Loader from './loader';
 
 export type ButtonProps = {
   variant?: 'outline' | 'primary';
@@ -40,6 +41,7 @@ export default function Button({
     <button
       className={cn(
         'py-3 rounded-xl font-medium transition-all w-fit',
+        loading && 'flex items-center justify-center gap-4',
         icon &&
           `flex items-center justify-center gap-2 ${
             iconPosition === 'left' ? 'flex-row' : 'flex-row-reverse'
@@ -54,28 +56,7 @@ export default function Button({
     >
       {icon && icon}
       {text}
-      {loading && (
-        <svg
-          className='animate-spin h-5 w-5 text-base-100'
-          xmlns='http://www.w3.org/2000/svg'
-          fill='none'
-          viewBox='0 0 24 24'
-        >
-          <circle
-            className='opacity-25'
-            cx='12'
-            cy='12'
-            r='10'
-            stroke='currentColor'
-            strokeWidth='4'
-          ></circle>
-          <path
-            className='opacity-75'
-            fill='currentColor'
-            d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A8.001 8.001 0 0120.709 5.709L18.296 8.12a6 6 0 10-1.414 1.414l2.412-2.412z'
-          ></path>
-        </svg>
-      )}
+      {loading && <Loader />}
     </button>
   );
 }

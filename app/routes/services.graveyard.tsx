@@ -16,31 +16,26 @@ import {
 } from '~/components/ui/dialog';
 import { MainLayout } from '~/layouts/main';
 import { prisma } from '~/services/db.server';
-import { sessionStorage } from '~/services/session.server';
+import { getCookie } from '~/utils/common/cookies';
 
 type LoaderData = {
-  user: Pick<User, 'email' | 'name'>;
   graveyard: Graveyard[];
 };
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const cookieString = request.headers.get('Cookie');
-
-  const user = (await sessionStorage.parse(cookieString)) as LoaderData['user'];
-
   const graveyard = await prisma.graveyard.findMany();
 
-  return json<LoaderData>({ user, graveyard });
+  return json({ graveyard });
 }
 
 export default function Graveyard() {
   const navigate = useNavigate();
 
-  const { user, graveyard } = useLoaderData<LoaderData>();
+  const { graveyard } = useLoaderData<LoaderData>();
 
   return (
     <Dialog>
-      <MainLayout user={user}>
+      <MainLayout>
         <Banner
           title='Pemakaman'
           subtitle='Layanan registrasi dan reservasi dari pemakaman baru untuk TPU dalam ruang lingkup daerah Kabupaten Bandung '

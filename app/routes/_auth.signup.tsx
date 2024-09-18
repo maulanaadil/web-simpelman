@@ -1,11 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ActionFunctionArgs } from '@remix-run/node';
-import {
-  Form,
-  json,
-  useNavigate,
-  useNavigation
-} from '@remix-run/react';
+import { Form, json, useNavigate, useNavigation } from '@remix-run/react';
 import bcrypt from 'bcryptjs';
 import { BackSquare } from 'iconsax-react';
 import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
@@ -15,10 +10,7 @@ import Button from '~/components/button';
 import InputPassword from '~/components/input-password';
 import InputText from '~/components/input-text';
 import { prisma } from '~/services/db.server';
-import {
-  validatePassword,
-  validatePhoneNumber
-} from '~/utils/common/validate';
+import { validatePassword, validatePhoneNumber } from '~/utils/common/validate';
 
 const schema = z.object({
   name: z.string().min(3),
@@ -241,13 +233,18 @@ export default function Signup() {
           />
           <Button
             type='submit'
+            className='mt-2'
             text='Daftar'
             size='full'
             loading={navigation.state === 'loading'}
           />
         </Form>
+        <div className='flex items-center justify-center my-3'>
+          <div className='h-[1px] bg-base-300 w-1/2'></div>
+          <div className='px-4 text-base-300'>Atau</div>
+          <div className='h-[1px] bg-base-300 w-1/2'></div>
+        </div>
         <Button
-          className='mt-3'
           onClick={() => navigate('/signin')}
           text='Masuk'
           variant='outline'
