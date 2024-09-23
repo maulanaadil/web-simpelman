@@ -9,53 +9,57 @@ import {
   useLoaderData,
 } from '@remix-run/react';
 import { useEffect } from 'react';
-import { getToast } from 'remix-toast';
 import { toast as notify, Toaster } from 'sonner';
 
-import './tailwind.css';
 import '@fontsource-variable/lexend-deca/wght.css';
-import { getCookie } from './utils/common/cookies';
 import Widget from './components/widget';
+import './tailwind.css';
 
 import sonnerStyles from '~/styles/sonner.css?url';
+import { sessionStorage } from './services/session.server';
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: sonnerStyles },
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { toast, headers } = await getToast(request);
-  const user = await getCookie({ request });
+  const session = await sessionStorage.getSession(
+    request.headers.get('Cookie')
+  );
 
-  if (!user) {
-    return json({ toast, user: null }, { headers });
-  }
+  const user = session.get('user') || null;
+  const toast = session.get('toast') || null;
 
-  if (!toast) {
-    return json({ toast: null, user }, { headers });
-  }
-
-  return json({ toast, user }, { headers });
+  return json(
+    { toast, user },
+    {
+      headers: {
+        'Set-Cookie': await sessionStorage.commitSession(session),
+      },
+    }
+  );
 };
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { toast, user } = useLoaderData<typeof loader>();
+  const loaderData = useLoaderData<typeof loader>();
 
   useEffect(() => {
-    if (toast?.type === 'error') {
-      notify.error(toast.message, {
-        closeButton: true,
-      });
+    if (loaderData) {
+      if (loaderData?.toast?.type === 'error') {
+        notify.error(loaderData?.toast.message, {
+          closeButton: true,
+        });
+      }
+      if (loaderData?.toast?.type === 'success') {
+        notify.success(loaderData?.toast.message, {
+          closeButton: true,
+        });
+      }
+      if (loaderData?.user) {
+        localStorage.setItem('user', JSON.stringify(loaderData?.user));
+      }
     }
-    if (toast?.type === 'success') {
-      notify.success(toast.message, {
-        closeButton: true,
-      });
-    }
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-    }
-  }, [toast]);
+  }, [loaderData]);
 
   return (
     <html lang='en'>

@@ -1,5 +1,19 @@
 // app/services/session.server.ts
-import { createCookie } from '@remix-run/node';
+import { User } from '@prisma/client';
+import { createCookieSessionStorage } from '@remix-run/node';
+import { createToastUtilsWithCustomSession } from 'remix-toast';
+
+type SessionData = {
+  user: Omit<User, 'createdAt' | 'updatedAt'>;
+};
+
+type SessionFlashData = {
+  error: string;
+  toast: {
+    type: 'success' | 'error' | 'info' | 'warning';
+    message: string;
+  } | null;
+};
 
 if (!process.env.SESSION_SECRET) {
   throw new Error(
@@ -8,11 +22,30 @@ if (!process.env.SESSION_SECRET) {
 }
 
 // export the whole sessionStorage object
-export const sessionStorage = createCookie('auth', {
-  httpOnly: true, // for security reasons, make this cookie http only
-  path: '/', // remember to add this so the cookie will work in all routes
-  sameSite: 'lax', // this helps with CSRF
-  secrets: [process.env.SESSION_SECRET], // replace this with an actual secret
-  secure: process.env.NODE_ENV === 'production', // enable this in prod only
-  maxAge: 60 * 60 * 24 * 7,
+export const sessionStorage = createCookieSessionStorage<
+  SessionData,
+  SessionFlashData
+>({
+  cookie: {
+    name: '__session',
+    secrets: [process.env.SESSION_SECRET],
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    httpOnly: true,
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7,
+  },
 });
+
+export const {
+  getToast,
+  redirectWithToast,
+  redirectWithSuccess,
+  redirectWithError,
+  redirectWithInfo,
+  redirectWithWarning,
+  jsonWithSuccess,
+  jsonWithError,
+  jsonWithInfo,
+  jsonWithWarning,
+} = createToastUtilsWithCustomSession(sessionStorage);

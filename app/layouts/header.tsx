@@ -30,27 +30,20 @@ export default function Header() {
       <div className='container py-4 flex justify-between w-full'>
         <Logo />
         <div className='flex justify-center items-center gap-10'>
-          {pages
-            .filter((page) => {
-              if (user && user.role !== 'admin') {
-                return page.route !== '/dashboard';
-              }
-              return true;
-            })
-            .map((page) => (
-              <Link
-                key={page.route}
-                className={cn(
-                  'p-2.5 transition-all font-semibold text-base-900 overflow-clip',
-                  location.pathname === page.route
-                    ? 'text-primary-500  pointer-events-none'
-                    : "text-base-900 cursor-pointer relative w-fit block after:block after:content-[''] after:absolute after:h-[2px] after:bg-primary-500 after:w-full after:scale-x-0 after:hover:scale-x-75 after:transition after:duration-300 after:origin-left "
-                )}
-                to={page.route}
-              >
-                {page.label}
-              </Link>
-            ))}
+          {pages.map((page) => (
+            <Link
+              key={page.route}
+              className={cn(
+                'p-2.5 transition-all font-semibold text-base-900 overflow-clip',
+                location.pathname === page.route
+                  ? 'text-primary-500  pointer-events-none'
+                  : "text-base-900 cursor-pointer relative w-fit block after:block after:content-[''] after:absolute after:h-[2px] after:bg-primary-500 after:w-full after:scale-x-0 after:hover:scale-x-75 after:transition after:duration-300 after:origin-left "
+              )}
+              to={page.route}
+            >
+              {page.label}
+            </Link>
+          ))}
         </div>
         {user ? (
           <Popover>
@@ -62,7 +55,7 @@ export default function Header() {
               </div>
             </PopoverTrigger>
             <PopoverContent className='w-[16rem]'>
-              <ProfileDropdown />
+              <ProfileDropdown user={user} />
             </PopoverContent>
           </Popover>
         ) : (
@@ -80,9 +73,17 @@ export default function Header() {
   );
 }
 
-function ProfileDropdown() {
+function ProfileDropdown({ user }: { user?: User }) {
   return (
     <div className='w-full flex flex-col gap-3'>
+      {user?.role === 'admin' && (
+        <Link
+          className='block p-3 w-full border hover:border-primary-500 transition-all rounded-lg border-base-50'
+          to='/dashboard/home'
+        >
+          Dashboard
+        </Link>
+      )}
       <Link
         className='block p-3 w-full border hover:border-primary-500 transition-all rounded-lg border-base-50'
         to='/history'

@@ -46,8 +46,19 @@ export default function Footer() {
         </div>
         <div className='w-full h-[1px] bg-base-700/20'></div>
 
-        <div className='py-5 text-base-700 text-sm'>
-          © 2024 Copyright, Disperkimtan
+        <div className='flex justify-between items-center'>
+          <div className='py-5 text-base-700 text-sm'>
+            © 2024 Copyright, Disperkimtan
+          </div>
+          <p className='text-xs text-base-700'>
+            Made by{' '}
+            <a
+              href='https://www.techiteazy.id/'
+              className='text-base-900 underline'
+            >
+              Tezy
+            </a>
+          </p>
         </div>
       </div>
     </div>

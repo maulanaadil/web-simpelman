@@ -1,6 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Garden } from '@prisma/client';
-import { ActionFunctionArgs, json, LoaderFunctionArgs } from '@remix-run/node';
+import {
+  ActionFunctionArgs,
+  json,
+  LoaderFunctionArgs,
+  redirect,
+} from '@remix-run/node';
 import { Form, useLoaderData } from '@remix-run/react';
 import { Controller } from 'react-hook-form';
 import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
@@ -20,6 +25,7 @@ import { Textarea } from '~/components/ui/textarea';
 import { complaints } from '~/constants/feedback';
 import { MainLayout } from '~/layouts/main';
 import { prisma } from '~/services/db.server';
+import { sessionStorage } from '~/services/session.server';
 
 type LoaderData = {
   garden: Omit<Garden, 'createdAt' | 'updatedAt'> | null;
@@ -51,6 +57,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
+  const session = await sessionStorage.getSession(
+    request.headers.get('Cookie')
+  );
   const { errors, data } = await getValidatedFormData<FeedbackSchema>(
     request,
     zodResolver(schema)
@@ -77,8 +86,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
     },
   });
 
-  return redirectWithSuccess('/services/garden', {
+  session.flash('toast', {
+    type: 'success',
     message: 'Berhasil mengirimkan pesan',
+  });
+
+  return redirect('/services/garden', {
+    headers: {
+      'Set-Cookie': await sessionStorage.commitSession(session),
+    },
   });
 }
 

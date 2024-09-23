@@ -362,7 +362,10 @@ const InputText = <T extends FieldValues>(
     <div className={cx(`mb-3`, containerClassname)}>
       {label && (
         <div
-          className={cx('text-base-700 font-medium text-sm', labelClassname)}
+          className={cx(
+            'text-base-700 font-medium text-sm mb-1',
+            labelClassname
+          )}
         >
           {label}
         </div>

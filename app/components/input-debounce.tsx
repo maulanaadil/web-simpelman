@@ -35,6 +35,8 @@ export default function InputDebounce<T extends FieldValues>({
       onChange={(e) => setValue(e.target.value)}
       value={value}
       placeholder='Search...'
+      className={className}
+      {...props}
     />
   );
 }

@@ -1,5 +1,7 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "fullTextIndex"]
+
 }
 datasource db {
   provider = "mysql"
@@ -28,6 +30,8 @@ model Garden {
   feedback    Feedback[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  @@fulltext([name])
+  @@fulltext([name, address])
 }
 
 model Feedback {
@@ -39,6 +43,8 @@ model Feedback {
   gardenId    String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  @@fulltext([email])
+  @@fulltext([email, content])
 }
 
 model Graveyard {
@@ -54,6 +60,8 @@ model Graveyard {
   deceased        Deceased[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  @@fulltext([name])
+  @@fulltext([name, address])
 }
 
 model Deceased {
@@ -76,6 +84,9 @@ model Deceased {
   status          Status?   @default(belum_terverifikasi)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  @@fulltext([name])
+  @@fulltext([name, fatherInLawName])
+  @@fulltext([name, idCard])
 }
 
 model Heirs {
@@ -88,6 +99,10 @@ model Heirs {
   additionalFile AdditionalFile?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  @@fulltext([name])
+  @@fulltext([name, idCard])
+  @@fulltext([name, phoneNumber]) 
+  @@fulltext([name, job])
 }
 
 model AddressDetail {
@@ -106,6 +121,14 @@ model AddressDetail {
   heirsId       String? @unique
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  @@fulltext([homeNumber])
+  @@fulltext([homeNumber, street])
+  @@fulltext([homeNumber, rt])
+  @@fulltext([homeNumber, rw])
+  @@fulltext([homeNumber, province])
+  @@fulltext([homeNumber, city])
+  @@fulltext([homeNumber, district])
+  @@fulltext([homeNumber, neighborhood])
 }
 
 model AdditionalFile {
@@ -119,6 +142,9 @@ model AdditionalFile {
   heirsId                    String? @unique
   createdAt                  DateTime @default(now())
   updatedAt                  DateTime @updatedAt
+  @@fulltext([ktpUrl])
+  @@fulltext([certificateUrl])
+  @@fulltext([incapabilityCertificateUrl])
 }
 
 enum Role {
