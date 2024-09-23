@@ -3,6 +3,9 @@ import { redirectWithSuccess } from 'remix-toast';
 import { sessionStorage } from '~/services/session.server';
 
 export async function action({ request }: ActionFunctionArgs) {
+  const session = await sessionStorage.getSession(
+    request.headers.get('Cookie')
+  );
   return redirectWithSuccess(
     '/',
     {
@@ -10,9 +13,7 @@ export async function action({ request }: ActionFunctionArgs) {
     },
     {
       headers: {
-        'Set-Cookie': await sessionStorage.serialize('', {
-          maxAge: 0,
-        }),
+        'Set-Cookie': await sessionStorage.destroySession(session),
       },
     }
   );

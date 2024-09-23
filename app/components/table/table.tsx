@@ -90,6 +90,8 @@ export type TableProps<T extends Record<string, unknown>> = {
   customFooter?: (table?: TableType<T>) => React.ReactNode;
   onClickRow?: (row: Row<T>) => void;
   withoutCard?: boolean;
+  isHasFilter?: boolean;
+  renderFilter?: () => React.ReactNode;
 } & TableWithSearch &
   TableWithPaginate;
 
@@ -137,6 +139,8 @@ export default function Table<TData extends Record<string, unknown>>({
   title,
   onClickRow,
   withoutCard = false,
+  isHasFilter,
+  renderFilter,
 }: TableProps<TData>) {
   const defaultTableData: TData[] = useMemo(() => [], []);
 
@@ -232,16 +236,19 @@ export default function Table<TData extends Record<string, unknown>>({
           {!!title && (
             <p className='text-xl font-bold text-neutral-900'>{title}</p>
           )}
-          {isHasSearch && (
-            <InputDebounce
-              placeholder={searchInputPlaceholder}
-              value={search ?? ''}
-              onChange={(val) => handleChangeInput(val as string)}
-              containerClassname='w-full'
-              isFixed
-              fixedLabel={<SearchNormal1 />}
-            />
-          )}
+          <div className='w-full flex items-center gap-2'>
+            {isHasSearch && (
+              <InputDebounce
+                placeholder={searchInputPlaceholder}
+                value={search ?? ''}
+                onChange={(val) => handleChangeInput(val as string)}
+                containerClassname='w-full mb-0 grow'
+                isFixed
+                fixedLabel={<SearchNormal1 />}
+              />
+            )}
+            {isHasFilter && renderFilter?.()}
+          </div>
         </div>
       )}
       <_Table

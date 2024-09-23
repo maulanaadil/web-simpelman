@@ -2,11 +2,11 @@ import axios from 'axios';
 import url from '~/api/url';
 
 export default {
-  getListProvince: () =>
+  getListProvince: async () =>
     axios
       .get<Province[]>(`${url.apiWilayahIndonesia}/provinces.json`)
       .then((res) => res.data),
-  getListCity: ({ provinceId }: { provinceId: string | null }) =>
+  getListCity: async ({ provinceId }: { provinceId: string | null }) =>
     provinceId
       ? axios
           .get<City[]>(
@@ -14,7 +14,7 @@ export default {
           )
           .then((res) => res.data)
       : undefined,
-  getListRegency: ({ cityId }: { cityId: string | null }) =>
+  getListRegency: async ({ cityId }: { cityId: string | null }) =>
     cityId
       ? axios
           .get<District[]>(
@@ -22,7 +22,7 @@ export default {
           )
           .then((res) => res.data)
       : undefined,
-  getListVillage: ({ districtId }: { districtId: string | null }) =>
+  getListVillage: async ({ districtId }: { districtId: string | null }) =>
     districtId
       ? axios
           .get<Neighborhood[]>(

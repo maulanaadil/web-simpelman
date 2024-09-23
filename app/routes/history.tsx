@@ -1,12 +1,17 @@
-import { Deceased, User } from '@prisma/client';
-import { json, LoaderFunctionArgs } from '@remix-run/node';
-import { useLoaderData, useNavigate } from '@remix-run/react';
+import { json, LoaderFunctionArgs, redirect } from '@remix-run/node';
+import {
+  isRouteErrorResponse,
+  useLoaderData,
+  useNavigate,
+  useRouteError,
+  useParams,
+} from '@remix-run/react';
 import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { BackSquare } from 'iconsax-react';
 import Table from '~/components/table/table';
 import { MainLayout } from '~/layouts/main';
 import { prisma } from '~/services/db.server';
-import { getCookie } from '~/utils/common/cookies';
+import { sessionStorage } from '~/services/session.server';
 
 type History = {
   id: string;
@@ -25,30 +30,51 @@ type LoaderData = {
 };
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getCookie({ request });
+  const session = await sessionStorage.getSession(
+    request.headers.get('Cookie')
+  );
 
-  const data = await prisma.user.findUnique({
-    where: {
-      id: user.id,
-    },
-    select: {
-      deceased: {
-        select: {
-          id: true,
-          name: true,
-          graveyard: {
-            select: {
-              id: true,
-              name: true,
+  const user = session.get('user');
+
+  if (user) {
+    const data = await prisma.user.findUnique({
+      where: {
+        id: user.id,
+      },
+      select: {
+        deceased: {
+          select: {
+            id: true,
+            name: true,
+            graveyard: {
+              select: {
+                id: true,
+                name: true,
+              },
             },
+            status: true,
           },
-          status: true,
         },
       },
-    },
-  });
+    });
 
-  return json({ data, user });
+    return json({ data, user });
+  }
+
+  if (!user || session.has('user')) {
+    session.flash('toast', {
+      type: 'error',
+      message: 'Harap login terlebih dahulu',
+    });
+
+    throw redirect('/signin', {
+      status: 401,
+      headers: {
+        'Set-Cookie': await sessionStorage.commitSession(session),
+      },
+      statusText: 'Unauthorized',
+    });
+  }
 }
 
 const columnHelper = createColumnHelper<History>();
@@ -89,6 +115,19 @@ const columns: ColumnDef<History, any>[] = [
     ),
   }),
 ];
+
+export function ErrorBoundary() {
+  const error = useRouteError() as {
+    statusText: string;
+    status: number;
+  };
+
+  return (
+    <div className='h-screen flex justify-center items-center'>
+      {error?.status} - {error?.statusText}
+    </div>
+  );
+}
 
 export default function History() {
   const navigate = useNavigate();

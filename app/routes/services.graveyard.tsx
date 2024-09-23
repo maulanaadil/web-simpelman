@@ -1,4 +1,4 @@
-import { Graveyard, User } from '@prisma/client';
+import { Graveyard } from '@prisma/client';
 import { json, LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData, useNavigate } from '@remix-run/react';
 import { X } from 'lucide-react';
@@ -16,7 +16,6 @@ import {
 } from '~/components/ui/dialog';
 import { MainLayout } from '~/layouts/main';
 import { prisma } from '~/services/db.server';
-import { getCookie } from '~/utils/common/cookies';
 
 type LoaderData = {
   graveyard: Graveyard[];

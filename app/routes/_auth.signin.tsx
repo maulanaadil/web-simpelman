@@ -1,6 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { User } from '@prisma/client';
-import { ActionFunctionArgs, json, LoaderFunctionArgs } from '@remix-run/node';
+import {
+  ActionFunctionArgs,
+  json,
+  LoaderFunctionArgs,
+  redirect,
+} from '@remix-run/node';
 import { Form, Link, useNavigate } from '@remix-run/react';
 import { BackSquare } from 'iconsax-react';
 import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
@@ -22,11 +27,11 @@ const schema = z.object({
 type SignInSchema = z.infer<typeof schema>;
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const cookieString = request.headers.get('Cookie');
+  const session = await sessionStorage.getSession(
+    request.headers.get('Cookie')
+  );
 
-  const user = (await sessionStorage.parse(cookieString)) as User;
-
-  if (user) {
+  if (session.has('user')) {
     return redirectWithInfo('/', {
       message: 'Anda sudah masuk, tidak perlu masuk lagi',
     });
@@ -36,6 +41,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
+  const session = await sessionStorage.getSession(
+    request.headers.get('Cookie')
+  );
   const {
     errors,
     data,
@@ -57,13 +65,6 @@ export async function action({ request }: ActionFunctionArgs) {
     where: {
       email: data.email,
     },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      password: true,
-      role: true,
-    },
   });
 
   if (!user) {
@@ -81,17 +82,17 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   }
 
-  return redirectWithSuccess(
-    '/',
-    {
-      message: 'Sign in success',
+  session.set('user', user);
+  session.flash('toast', {
+    type: 'success',
+    message: 'Sign in berhasil',
+  });
+
+  return redirect('/', {
+    headers: {
+      'Set-Cookie': await sessionStorage.commitSession(session),
     },
-    {
-      headers: {
-        'Set-Cookie': await sessionStorage.serialize(user),
-      },
-    }
-  );
+  });
 }
 
 export default function Signin() {

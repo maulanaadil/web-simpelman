@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import Button from './button';
 import { cn } from '~/lib/utils';
-import { toast } from 'sonner';
+import { useLocation } from '@remix-run/react';
 
 export default function Widget() {
+  const location = useLocation();
   const ref = useRef<HTMLDivElement | null>(null);
   const [showPowerMessage, setShowPowerMessage] = useState(false);
 
@@ -28,6 +29,13 @@ export default function Widget() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [ref]);
+
+  if (
+    location.pathname.includes('sign') ||
+    location.pathname.includes('dashboard')
+  ) {
+    return null;
+  }
 
   return (
     <div id='widget' ref={ref} className='w-full h-full'>

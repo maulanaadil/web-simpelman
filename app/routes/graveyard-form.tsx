@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Gender, Graveyard, User } from '@prisma/client';
+import { Gender, Graveyard } from '@prisma/client';
 import {
   ActionFunctionArgs,
   json,
@@ -10,13 +10,7 @@ import {
   unstable_createMemoryUploadHandler,
   unstable_parseMultipartFormData,
 } from '@remix-run/node';
-import {
-  Form,
-  useFetcher,
-  useLoaderData,
-  useNavigate,
-  useSubmit,
-} from '@remix-run/react';
+import { Form, useFetcher, useLoaderData, useNavigate } from '@remix-run/react';
 import dayjs from 'dayjs';
 import { BackSquare } from 'iconsax-react';
 import { CalendarIcon, Check } from 'lucide-react';
@@ -29,8 +23,7 @@ import {
   UseFormWatch,
 } from 'react-hook-form';
 import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
-import { redirectWithError, redirectWithSuccess } from 'remix-toast';
-import { toast } from 'sonner';
+import { redirectWithSuccess } from 'remix-toast';
 import { z } from 'zod';
 import Button from '~/components/button';
 import InputText from '~/components/input-text';
@@ -65,7 +58,6 @@ import {
 } from '~/services/api/wilayahIndonesia';
 import { prisma } from '~/services/db.server';
 import { sessionStorage } from '~/services/session.server';
-import { getCookie } from '~/utils/common/cookies';
 import { cn } from '~/utils/common/styles';
 
 const STEPS = [
@@ -224,7 +216,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const user = await getCookie({ request });
+  const session = await sessionStorage.getSession(
+    request.headers.get('Cookie')
+  );
+
+  const user = session.get('user');
 
   const formData = await unstable_parseMultipartFormData(
     request,
