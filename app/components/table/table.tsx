@@ -13,7 +13,7 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import { RankingInfo, rankItem } from '@tanstack/match-sorter-utils';
 import { SearchNormal1 } from 'iconsax-react';
-import { MakeTypeNever } from 'type/utils';
+import { MakeTypeNever } from 'types/utils';
 import InputDebounce from '../input-debounce';
 import { cn } from '~/lib/utils';
 import Loader from '../loader';

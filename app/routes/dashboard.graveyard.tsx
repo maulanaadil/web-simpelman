@@ -32,6 +32,7 @@ import {
   DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '~/components/ui/dialog';
@@ -346,8 +347,6 @@ export default function DashboardGraveyard() {
     resolver: zodResolver(schema),
   });
 
-  console.log(fetcher, 'data');
-
   const columnHelper = createColumnHelper<Graveyard>();
 
   const columns: ColumnDef<Graveyard, any>[] = [
@@ -556,189 +555,182 @@ export default function DashboardGraveyard() {
           </DialogTitle>
           <DialogDescription className='py-4'>
             <fetcher.Form
-              className='flex flex-col'
+              className='flex flex-col gap-4 max-h-[30rem] px-2 overflow-y-auto'
               onSubmit={handleSubmit}
               method='post'
               encType='multipart/form-data'
             >
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='flex flex-col gap-4'>
-                  <InputText
-                    label={
-                      <>
-                        Nama <span className='text-danger-500'>*</span>
-                      </>
-                    }
-                    isHookForm
-                    control={control}
-                    controlName='name'
-                    error={errors?.name?.message}
-                    description='Nama dari makam tersebut'
-                    placeholder='Masukan nama taman'
-                    name='name'
-                  />
-                  <InputText
-                    label={
-                      <>
-                        Map Url <span className='text-danger-500'>*</span>
-                      </>
-                    }
-                    isHookForm
-                    control={control}
-                    controlName='mapUrl'
-                    error={errors?.mapUrl?.message}
-                    description='Map Url dari makam tersebut'
-                    placeholder='Masukan map url'
-                    name='mapUrl'
-                  />
-                  <Controller
-                    control={control}
-                    name='address'
-                    render={({ field }) => (
-                      <div className='flex flex-col gap-2'>
-                        <div className='flex flex-col'>
-                          <p className='text-base-700 font-medium text-sm mb-1'>
-                            Alamat <span className='text-danger-500'>*</span>
-                          </p>
-                          <p className='text-base-400 text-xs'>
-                            Masukan alamat taman
-                          </p>
-                        </div>
-                        <Textarea
-                          value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          name='address'
-                          placeholder='Tulis pesan anda'
-                        />
-                        {errors?.address?.message && (
-                          <p className='text-danger-500 text-sm'>
-                            {errors?.address?.message}
-                          </p>
-                        )}
-                      </div>
+              <InputText
+                label={
+                  <>
+                    Nama <span className='text-danger-500'>*</span>
+                  </>
+                }
+                isHookForm
+                control={control}
+                controlName='name'
+                error={errors?.name?.message}
+                description='Nama dari makam tersebut'
+                placeholder='Masukan nama taman'
+                name='name'
+              />
+              <InputText
+                label={
+                  <>
+                    Map Url <span className='text-danger-500'>*</span>
+                  </>
+                }
+                isHookForm
+                control={control}
+                controlName='mapUrl'
+                error={errors?.mapUrl?.message}
+                description='Map Url dari makam tersebut'
+                placeholder='Masukan map url'
+                name='mapUrl'
+              />
+              <Controller
+                control={control}
+                name='address'
+                render={({ field }) => (
+                  <div className='flex flex-col gap-2'>
+                    <div className='flex flex-col'>
+                      <p className='text-base-700 font-medium text-sm mb-1'>
+                        Alamat <span className='text-danger-500'>*</span>
+                      </p>
+                      <p className='text-base-400 text-xs'>
+                        Masukan alamat taman
+                      </p>
+                    </div>
+                    <Textarea
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      name='address'
+                      placeholder='Tulis pesan anda'
+                    />
+                    {errors?.address?.message && (
+                      <p className='text-danger-500 text-sm'>
+                        {errors?.address?.message}
+                      </p>
                     )}
+                  </div>
+                )}
+              />
+              <Controller
+                control={control}
+                name='imageUrl'
+                render={({ field }) => (
+                  <InputUpload
+                    label='Gambar taman'
+                    isRequired
+                    desc='Upload Gambar taman dengan format “.jpg , .png”'
+                    onChange={(value) => field.onChange(value)}
+                    value={field?.value as UploadValue}
+                    error={errors.imageUrl?.message}
                   />
-                  <Controller
-                    control={control}
-                    name='imageUrl'
-                    render={({ field }) => (
-                      <InputUpload
-                        label='Gambar taman'
-                        isRequired
-                        desc='Upload Gambar taman dengan format “.jpg , .png”'
-                        onChange={(value) => field.onChange(value)}
-                        value={field?.value as UploadValue}
-                        error={errors.imageUrl?.message}
-                      />
+                )}
+              />
+              <Controller
+                control={control}
+                name='type'
+                render={({ field }) => (
+                  <div className='flex flex-col gap-2 mb-2'>
+                    <div className='flex flex-col'>
+                      <p className='text-base-700 font-medium text-sm'>
+                        Tipe <span className='text-danger-500'>*</span>
+                      </p>
+                      <p className='text-base-400 text-xs'>
+                        Masukan tipe taman
+                      </p>
+                    </div>
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) => field.onChange(value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder='Pilih taman' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {graveyardTypeOptions.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors?.type?.message && (
+                      <p className='text-danger-500 text-sm'>
+                        {errors?.type?.message}
+                      </p>
                     )}
-                  />
-                </div>
-                <div className='flex flex-col gap-4'>
-                  <Controller
-                    control={control}
-                    name='type'
-                    render={({ field }) => (
-                      <div className='flex flex-col gap-2 mb-2'>
-                        <div className='flex flex-col'>
-                          <p className='text-base-700 font-medium text-sm'>
-                            Tipe <span className='text-danger-500'>*</span>
-                          </p>
-                          <p className='text-base-400 text-xs'>
-                            Masukan tipe taman
-                          </p>
-                        </div>
-                        <Select
-                          value={field.value}
-                          onValueChange={(value) => field.onChange(value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder='Pilih taman' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {graveyardTypeOptions.map((type) => (
-                              <SelectItem key={type.value} value={type.value}>
-                                {type.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {errors?.type?.message && (
-                          <p className='text-danger-500 text-sm'>
-                            {errors?.type?.message}
-                          </p>
-                        )}
-                      </div>
+                  </div>
+                )}
+              />
+              <Controller
+                control={control}
+                name='religion'
+                render={({ field }) => (
+                  <div className='flex flex-col gap-2 mb-2'>
+                    <div className='flex flex-col'>
+                      <p className='text-base-700 font-medium text-sm'>
+                        Agama <span className='text-danger-500'>*</span>
+                      </p>
+                      <p className='text-base-400 text-xs'>
+                        Masukan agama taman
+                      </p>
+                    </div>
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) => field.onChange(value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder='Pilih taman' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {religionOptions.map((religion) => (
+                          <SelectItem
+                            key={religion.value}
+                            value={religion.value}
+                          >
+                            {religion.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors?.religion?.message && (
+                      <p className='text-danger-500 text-sm'>
+                        {errors?.religion?.message}
+                      </p>
                     )}
-                  />
-                  <Controller
-                    control={control}
-                    name='religion'
-                    render={({ field }) => (
-                      <div className='flex flex-col gap-2 mb-2'>
-                        <div className='flex flex-col'>
-                          <p className='text-base-700 font-medium text-sm'>
-                            Agama <span className='text-danger-500'>*</span>
-                          </p>
-                          <p className='text-base-400 text-xs'>
-                            Masukan agama taman
-                          </p>
-                        </div>
-                        <Select
-                          value={field.value}
-                          onValueChange={(value) => field.onChange(value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder='Pilih taman' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {religionOptions.map((religion) => (
-                              <SelectItem
-                                key={religion.value}
-                                value={religion.value}
-                              >
-                                {religion.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {errors?.religion?.message && (
-                          <p className='text-danger-500 text-sm'>
-                            {errors?.religion?.message}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  />
-                  <InputText
-                    label={
-                      <>
-                        Jumlah makam tersedia{' '}
-                        <span className='text-danger-500'>*</span>
-                      </>
-                    }
-                    type='number'
-                    isHookForm
-                    control={control}
-                    controlName='numberOfGrave'
-                    error={errors?.numberOfGrave?.message}
-                    description='Jumlah makam yang tersedia'
-                    placeholder='Masukan jumlah makam'
-                    name='numberOfGrave'
-                  />
-                </div>
-              </div>
-              <div className='flex items-center gap-4 justify-end'>
-                <DialogClose asChild>
-                  <Button text='Batalkan' variant='outline' />
-                </DialogClose>
-                <Button
-                  text={id !== 'add' ? 'Simpan' : 'Update'}
-                  type='submit'
-                />
-              </div>
+                  </div>
+                )}
+              />
+              <InputText
+                label={
+                  <>
+                    Jumlah makam tersedia{' '}
+                    <span className='text-danger-500'>*</span>
+                  </>
+                }
+                type='number'
+                isHookForm
+                control={control}
+                controlName='numberOfGrave'
+                error={errors?.numberOfGrave?.message}
+                description='Jumlah makam yang tersedia'
+                placeholder='Masukan jumlah makam'
+                name='numberOfGrave'
+              />
             </fetcher.Form>
           </DialogDescription>
         </DialogHeader>
+        <DialogFooter>
+          <div className='flex items-center gap-4 justify-end'>
+            <DialogClose asChild>
+              <Button text='Batalkan' variant='outline' />
+            </DialogClose>
+            <Button text={id !== 'add' ? 'Simpan' : 'Update'} type='submit' />
+          </div>
+        </DialogFooter>
       </DialogContent>
     </>
   );
