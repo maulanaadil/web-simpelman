@@ -609,7 +609,7 @@ function StepThree({
                     onValueChange={(value) => field.onChange(value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder='Pilih jenis pemakaman' />
+                      <SelectValue placeholder='Pilih jenis pekerjaan' />
                     </SelectTrigger>
                     <SelectContent>
                       {jobOptions.map((type) => (
@@ -987,7 +987,7 @@ function StepTwo({
                     onValueChange={(value) => field.onChange(value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder='Pilih jenis pemakaman' />
+                      <SelectValue placeholder='Pilih jenis kelamin' />
                     </SelectTrigger>
                     <SelectContent>
                       {genderOptions.map((type) => (
