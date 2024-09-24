@@ -5,6 +5,7 @@ import {
   json,
   LoaderFunctionArgs,
   NodeOnDiskFile,
+  redirect,
   unstable_composeUploadHandlers,
   unstable_createFileUploadHandler,
   unstable_createMemoryUploadHandler,
@@ -23,7 +24,6 @@ import {
   UseFormWatch,
 } from 'react-hook-form';
 import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
-import { redirectWithSuccess } from 'remix-toast';
 import { z } from 'zod';
 import Button from '~/components/button';
 import InputText from '~/components/input-text';
@@ -88,13 +88,6 @@ const schema = z.object({
   graveyard: z.string(),
   type: z.string(),
   religion: z.string(),
-  additionalInfo: z
-    .array(
-      z.object({
-        hasKeteranganKurangMampu: z.boolean(),
-      })
-    )
-    .optional(),
   address: z.string().optional(),
   numberOfGrave: z.number().optional(),
   name: z.string(),
@@ -297,7 +290,7 @@ export async function action({ request }: ActionFunctionArgs) {
         burialDate: data.burialDate,
         graveyardId: data.graveyard,
         userId: user?.id,
-        additionalInfo: data.additionalInfo || {},
+        additionalInfo: {},
       },
     }),
     prisma.graveyard.update({
@@ -352,6 +345,7 @@ export async function action({ request }: ActionFunctionArgs) {
       idCard: data.heirsIdCard,
       phoneNumber: data.heirsPhoneNumber,
       job: data.heirsJob,
+      deceasedId: deceased.id,
     },
   });
 
@@ -394,8 +388,15 @@ export async function action({ request }: ActionFunctionArgs) {
     },
   });
 
-  return redirectWithSuccess('/services/graveyard', {
-    message: 'Data berhasil disimpan',
+  session.flash('toast', {
+    type: 'success',
+    message: 'Berhasil menyimpan data reservasi',
+  });
+
+  return redirect('/services/graveyard', {
+    headers: {
+      'Set-Cookie': await sessionStorage.commitSession(session),
+    },
   });
 }
 
@@ -529,9 +530,6 @@ function StepThree({
       setValue('heirsRt', watch('rt'));
       setValue('heirsRw', watch('rw'));
       setValue('heirsProvince', watch('province'));
-      setValue('heirsCity', watch('city'));
-      setValue('heirsDistrict', watch('district'));
-      setValue('heirsNeighborhood', watch('neighborhood'));
     }
   }, [isHeirsAddressSame]);
 
@@ -1572,43 +1570,6 @@ function StepOne({
                 {errors?.religion?.message && (
                   <p className='text-danger-500 text-sm'>
                     {errors?.religion?.message}
-                  </p>
-                )}
-              </div>
-            )}
-          />
-          <Controller
-            control={control}
-            name='additionalInfo'
-            render={({ field }) => (
-              <div className='flex flex-col gap-2 mb-2'>
-                <div className='flex flex-col'>
-                  <p className='text-base-700 font-medium text-sm'>
-                    Keterangan Kurang Mampu{' '}
-                  </p>
-                  <p className="'text-base-400 text-xs'">
-                    Apakah Memiliki Surat Keterangan Kurang mampu?
-                  </p>
-                </div>
-                <div className='flex items-center gap-2 mt-4'>
-                  <Checkbox
-                    checked={
-                      field.value?.find((info) => info.hasKeteranganKurangMampu)
-                        ?.hasKeteranganKurangMampu
-                    }
-                    onCheckedChange={(check) => {
-                      field.onChange([
-                        {
-                          hasKeteranganKurangMampu: check,
-                        },
-                      ]);
-                    }}
-                  />
-                  <p className='text-base-900 font-light'>Tidak mampu</p>
-                </div>
-                {errors?.additionalInfo?.message && (
-                  <p className='text-danger-500 text-sm'>
-                    {errors?.additionalInfo?.message}
                   </p>
                 )}
               </div>

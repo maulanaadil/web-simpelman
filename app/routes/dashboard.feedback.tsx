@@ -9,7 +9,7 @@ import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import dayjs from 'dayjs';
 import { X } from 'lucide-react';
 import { useCallback, useDeferredValue, useEffect, useState } from 'react';
-import { Feedback } from 'type/model';
+import { Feedback } from 'types/model';
 import * as XLSX from 'xlsx';
 import Button from '~/components/button';
 import Table from '~/components/table/table';

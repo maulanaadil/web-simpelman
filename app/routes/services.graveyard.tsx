@@ -91,7 +91,7 @@ export default function Graveyard() {
                     </ol>
                   </DialogDescription>
                 </DialogHeader>
-                <DialogFooter>
+                <DialogFooter className='flex  gap-4 flex-row items-center justify-end'>
                   <DialogClose asChild>
                     <Button text='Batalkan' variant='outline' />
                   </DialogClose>

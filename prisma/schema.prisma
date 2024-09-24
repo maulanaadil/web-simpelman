@@ -82,6 +82,7 @@ model Deceased {
   user            User?    @relation(fields: [userId], references: [id])
   userId          Int?
   status          Status?   @default(belum_terverifikasi)
+  heirs           Heirs?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   @@fulltext([name])
@@ -97,6 +98,8 @@ model Heirs {
   job          String
   addressDetail AddressDetail?
   additionalFile AdditionalFile?
+  deceased      Deceased?     @relation(fields: [deceasedId], references: [id])
+  deceasedId    String?       @unique
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   @@fulltext([name])
