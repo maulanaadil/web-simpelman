@@ -47,6 +47,7 @@ import {
 import { Controller } from 'react-hook-form';
 import * as XLSX from 'xlsx';
 import { sessionStorage } from '~/services/session.server';
+import { sendEmail } from '~/utils/mailer';
 
 type DeceasedAssociation = Deceased & {
   addressDetail: AddressDetail;
@@ -260,7 +261,15 @@ export async function action({ request }: ActionFunctionArgs) {
           addressDetail: true,
         },
       },
+      user: true,
     },
+  });
+
+  await sendEmail({
+    name: deceased.heirs?.name,
+    to: deceased.user?.email,
+    deceasedName: deceased.name,
+    type: 'verified-reservation',
   });
 
   session.flash('toast', {

@@ -2,13 +2,21 @@ import { render } from '@react-email/components';
 import nodemailer from 'nodemailer';
 import ResetPassword from 'react-email/emails/ResetPassword';
 import MagicLink from 'react-email/emails/MagicLink';
+import VerifyReservation from 'react-email/emails/VerifyReservation';
 
-type SendEmailProps = {
-  name: string | null | undefined;
-  to: string | undefined;
-  link: string;
-  type: 'verify' | 'forgot-password';
-};
+type SendEmailProps =
+  | {
+      name: string | null | undefined;
+      to: string | undefined;
+      link: string;
+      type: 'verify' | 'forgot-password';
+    }
+  | {
+      name: string | null | undefined;
+      to: string | undefined;
+      deceasedName: string | null | undefined;
+      type: 'verified-reservation';
+    };
 
 if (
   !process.env.SMPTP_MAIL_USER ||
@@ -28,23 +36,41 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export async function sendEmail({ to, link, name, type }: SendEmailProps) {
+export async function sendEmail(body: SendEmailProps) {
   const options = {
     from: process.env.SMPTP_MAIL_USER,
-    to,
+    to: body.to,
   };
 
-  if (type === 'verify') {
-    const html = await render(<MagicLink name={name || ''} link={link} />);
+  if (body.type === 'verified-reservation') {
+    const html = await render(
+      <VerifyReservation
+        name={body.name || ''}
+        deceaseName={body.deceasedName || ''}
+      />
+    );
     return await transporter.sendMail({
-      subject: 'Email Verification',
+      subject: 'Reservasi Diterima',
       html,
       ...options,
     });
   }
 
-  if (type === 'forgot-password') {
-    const html = await render(<ResetPassword name={name || ''} link={link} />);
+  if (body.type === 'verify') {
+    const html = await render(
+      <MagicLink name={body.name || ''} link={body.link} />
+    );
+    return await transporter.sendMail({
+      subject: 'Verifikasi Email',
+      html,
+      ...options,
+    });
+  }
+
+  if (body.type === 'forgot-password') {
+    const html = await render(
+      <ResetPassword name={body.name || ''} link={body.link} />
+    );
     return await transporter.sendMail({
       subject: 'Reset Password',
       html,
