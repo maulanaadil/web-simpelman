@@ -17,7 +17,14 @@ async function main() {
   garden.forEach(async (data) => {
     await prisma.garden.create({
       data: {
-        ...data,
+        name: data.name,
+        type: data.type,
+        address: data.address,
+        photo: {
+          createMany: {
+            data: data.photos,
+          },
+        },
       },
     });
   });
@@ -25,8 +32,18 @@ async function main() {
   graveyard.forEach(async (data) => {
     await prisma.graveyard.create({
       data: {
-        ...data,
-        additionalInfo: {},
+        name: data.name,
+        mapsUrl: data.mapsUrl,
+        address: data.address,
+        numberOfGrave: data.numberOfGrave,
+        religion: data.religion,
+        type: data.type,
+        additionalInfo: data.additionalInfo || {},
+        photo: {
+          createMany: {
+            data: data.photos,
+          },
+        },
       },
     });
   });

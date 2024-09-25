@@ -1,7 +1,7 @@
-import { Graveyard } from '@prisma/client';
 import { json, LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData, useNavigate } from '@remix-run/react';
 import { X } from 'lucide-react';
+import { GraveyardAssociation } from 'types/model';
 import Banner from '~/components/banner';
 import Button from '~/components/button';
 import {
@@ -18,19 +18,32 @@ import { MainLayout } from '~/layouts/main';
 import { prisma } from '~/services/db.server';
 
 type LoaderData = {
-  graveyard: Graveyard[];
+  data: {
+    graveyards: GraveyardAssociation[];
+  };
 };
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const graveyard = await prisma.graveyard.findMany();
+  const graveyard = await prisma.graveyard.findMany({
+    include: {
+      photo: true,
+    },
+  });
 
-  return json({ graveyard });
+  return json<LoaderData>({
+    data: {
+      graveyards: graveyard.map((graveyard) => ({
+        ...graveyard,
+        photos: graveyard.photo,
+      })),
+    },
+  });
 }
 
 export default function Graveyard() {
   const navigate = useNavigate();
 
-  const { graveyard } = useLoaderData<LoaderData>();
+  const loaderData = useLoaderData<LoaderData>();
 
   return (
     <Dialog>
@@ -115,14 +128,14 @@ export default function Graveyard() {
             </div>
           </div>
           <div className='mt-6 grid grid-cols-2 gap-6'>
-            {graveyard.map((data) => (
+            {loaderData.data.graveyards.map((data) => (
               <div
                 key={data.id}
                 className='p-5 rounded-xl border shadow-sm border-base-300 flex items-start gap-5'
               >
                 <div className='w-[18rem] h-[11.25rem] overflow-clip rounded-xl'>
                   <img
-                    src={data.imageUrl}
+                    src={data.photos[0].imageUrl}
                     alt='tpu'
                     className='w-full h-full object-cover rounded-xl'
                   />

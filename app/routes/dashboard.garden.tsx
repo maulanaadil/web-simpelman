@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Garden } from '@prisma/client';
 import {
   ActionFunctionArgs,
   json,
@@ -22,6 +21,7 @@ import { X } from 'lucide-react';
 import { useCallback, useDeferredValue, useEffect, useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
+import { GardenAssociation } from 'types/model';
 import * as XLSX from 'xlsx';
 import { z } from 'zod';
 import Button from '~/components/button';
@@ -46,6 +46,10 @@ import { Textarea } from '~/components/ui/textarea';
 import { prisma } from '~/services/db.server';
 import { sessionStorage } from '~/services/session.server';
 import { ContextType } from './dashboard';
+
+type Garden = GardenAssociation & {
+  createdAt: Date;
+};
 
 type LoaderData = {
   data: {
@@ -79,13 +83,10 @@ const schema = z
     id: z.string().optional(),
     name: z.string().min(8).optional(),
     address: z.string().min(8).optional(),
-    imageUrl: z
-      .custom<UploadValue | undefined>(
+    photos: z
+      .custom<UploadValue[] | undefined>(
         (value) => {
-          if (value) {
-            if (!value.url) {
-              return false;
-            }
+          if (value.length) {
             return true;
           }
           return false;
@@ -106,7 +107,7 @@ const schema = z
       }
 
       // When intent is not 'delete', ensure required fields are filled
-      return data.name && data.address && data.type && data.imageUrl;
+      return data.name && data.address && data.type && data.photos;
     },
     {
       message: 'All fields must be filled unless intent is delete',
@@ -117,21 +118,55 @@ const schema = z
 type Schema = z.infer<typeof schema>;
 
 export async function loader({ request }: LoaderFunctionArgs) {
+  const session = await sessionStorage.getSession(
+    request.headers.get('Cookie')
+  );
+
   const url = new URL(request.url);
-  const gardenId = url.searchParams.get('gardenId');
+  const gardenId = url.searchParams.get('gardenId') ?? '';
   const search = url.searchParams.get('search');
   const page = parseInt(url.searchParams.get('page') || '1', 10);
   const size = parseInt(url.searchParams.get('size') || '10', 10);
 
-  if (gardenId) {
+  if (!!gardenId) {
     const garden = await prisma.garden.findUnique({
       where: {
         id: gardenId,
       },
+      include: {
+        photo: true,
+      },
     });
+
+    if (!garden) {
+      session.flash('toast', {
+        type: 'error',
+        message: 'Data tidak ditemukan',
+      });
+
+      return json<LoaderData>(
+        {
+          data: {
+            garden: null,
+          },
+        },
+        {
+          headers: {
+            'Set-Cookie': await sessionStorage.commitSession(session),
+          },
+        }
+      );
+    }
+
     return json<LoaderData>({
       data: {
-        garden,
+        garden: {
+          ...garden,
+          photos: garden.photo.map((photo) => ({
+            ...photo,
+            imageUrl: photo.imageUrl,
+          })),
+        },
       },
     });
   }
@@ -147,11 +182,20 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
     skip: page * size,
     take: size,
+    include: {
+      photo: true,
+    },
   });
 
   return json<LoaderData>({
     data: {
-      gardens,
+      gardens: gardens.map((garden) => ({
+        ...garden,
+        photos: garden.photo.map((photo) => ({
+          ...photo,
+          imageUrl: photo.imageUrl,
+        })),
+      })),
       pagination: {
         page,
         size,
@@ -189,7 +233,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return json({
       files: files.map((file) => ({
         name: file.name,
-        url: `/files/${file.name}`,
+        url: `/images/garden/${file.name}`,
       })),
     });
   }
@@ -239,7 +283,11 @@ export async function action({ request }: ActionFunctionArgs) {
       data: {
         name: data?.name || '',
         address: data?.address || '',
-        imageUrl: data?.imageUrl?.url || '',
+        photo: {
+          create: data?.photos?.map((photo) => ({
+            imageUrl: photo.url,
+          })),
+        },
         type: data?.type || 'pemda',
       },
     });
@@ -267,7 +315,16 @@ export async function action({ request }: ActionFunctionArgs) {
       data: {
         name: data.name,
         address: data.address,
-        imageUrl: data?.imageUrl?.url || '',
+        photo: {
+          deleteMany: {
+            id: {
+              notIn: data?.photos?.map((photo) => photo.name),
+            },
+          },
+          create: data?.photos?.map((photo) => ({
+            imageUrl: photo.url,
+          })),
+        },
         type: data.type,
       },
     });
@@ -323,6 +380,7 @@ export default function DashboardGarden() {
     formState: { errors },
     control,
     reset,
+    watch,
   } = useRemixForm<Schema>({
     mode: 'onSubmit',
     resolver: zodResolver(schema),
@@ -351,17 +409,33 @@ export default function DashboardGarden() {
         <p className='text-base-900 line-clamp-1'>{row.original.address}</p>
       ),
     }),
-    columnHelper.accessor((row) => row.imageUrl, {
-      id: 'imageUrl',
+    columnHelper.accessor((row) => row.photos[0], {
+      id: 'photos',
       enableSorting: false,
       header: 'Gambar',
-      cell: ({ row }) => (
-        <img
-          src={row.original.imageUrl}
-          alt={row.original.name}
-          className='w-20 h-20 object-cover rounded-lg'
-        />
-      ),
+      cell: ({ row }) =>
+        row.original.photos.length > 0 ? (
+          row.original.photos.length > 1 ? (
+            <div className='flex flex-wrap gap-1 grow'>
+              {row.original.photos.slice(0, 4).map((photo) => (
+                <img
+                  key={photo.id}
+                  src={photo.imageUrl}
+                  alt={photo.id}
+                  className='w-7 h-7 object-cover rounded'
+                />
+              ))}
+            </div>
+          ) : (
+            <img
+              src={row.original.photos[0].imageUrl}
+              alt={row.original.photos[0].id}
+              className='w-12 h-12 object-cover rounded-lg'
+            />
+          )
+        ) : (
+          <p>No photos available</p>
+        ),
     }),
     columnHelper.accessor((row) => row.type, {
       id: 'type',
@@ -416,7 +490,6 @@ export default function DashboardGarden() {
     const worksheetData = data?.gardens?.map((garden) => ({
       Nama: garden.name,
       Alamat: garden.address,
-      Gambar: garden.imageUrl,
       Tipe: GardenType[garden.type],
       DibuatPada: dayjs(garden.createdAt).format('DD MMM YYYY'),
     }));
@@ -441,7 +514,7 @@ export default function DashboardGarden() {
       reset({
         name: '',
         address: '',
-        imageUrl: undefined,
+        photos: undefined,
         type: 'pemda',
         intent: 'add',
       });
@@ -452,10 +525,10 @@ export default function DashboardGarden() {
         id: fetcher?.data?.data.garden.id,
         name: fetcher?.data?.data.garden.name,
         address: fetcher?.data?.data.garden.address,
-        imageUrl: {
-          name: fetcher?.data?.data.garden.imageUrl,
-          url: fetcher?.data?.data.garden.imageUrl,
-        },
+        photos: fetcher?.data?.data?.garden?.photos.map((photo) => ({
+          name: photo.imageUrl,
+          url: photo.imageUrl,
+        })),
         type: fetcher?.data?.data.garden.type,
         intent: 'edit',
       });
@@ -465,7 +538,7 @@ export default function DashboardGarden() {
     reset,
     fetcher?.data?.data?.garden?.name,
     fetcher?.data?.data?.garden?.address,
-    fetcher?.data?.data?.garden?.imageUrl,
+    fetcher?.data?.data?.garden?.photos,
     fetcher?.data?.data?.garden?.type,
     id,
   ]);
@@ -565,15 +638,16 @@ export default function DashboardGarden() {
               />
               <Controller
                 control={control}
-                name='imageUrl'
+                name='photos'
                 render={({ field }) => (
                   <InputUpload
                     label='Gambar taman'
                     isRequired
+                    isMultiple
                     desc='Upload Gambar taman dengan format “.jpg , .png”'
                     onChange={(value) => field.onChange(value)}
-                    value={field?.value as UploadValue}
-                    error={errors.imageUrl?.message}
+                    value={field?.value as UploadValue[]}
+                    error={errors.photos?.message}
                   />
                 )}
               />
@@ -618,7 +692,7 @@ export default function DashboardGarden() {
                   <Button text='Batalkan' variant='outline' />
                 </DialogClose>
                 <Button
-                  text={fetcher.data?.data?.garden?.id ? 'Update' : 'Simpan'}
+                  text={id === 'add' ? 'Simpan' : 'Update'}
                   type='submit'
                 />
               </div>
