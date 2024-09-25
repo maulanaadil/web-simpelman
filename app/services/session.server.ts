@@ -3,7 +3,7 @@ import { User } from '@prisma/client';
 import { createCookieSessionStorage } from '@remix-run/node';
 import { createToastUtilsWithCustomSession } from 'remix-toast';
 
-type SessionData = {
+export type SessionData = {
   user: Omit<User, 'createdAt' | 'updatedAt'>;
 };
 

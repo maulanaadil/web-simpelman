@@ -17,6 +17,7 @@ model User {
     name        String?
     deceased    Deceased[]
     role        Role      @default(user)
+    isVerified  Boolean @default(false)
     createdAt   DateTime @default(now())
     updatedAt   DateTime @updatedAt
 }
