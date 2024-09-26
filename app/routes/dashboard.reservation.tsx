@@ -291,7 +291,7 @@ export default function DashboardReservation() {
   const [searchParams, setSearchParams] = useSearchParams();
   const fetcher = useFetcher<typeof loader>();
   const { data } = useLoaderData<LoaderData>();
-  const [_, setId] = useOutletContext<ContextType>();
+  const [id, setId] = useOutletContext<ContextType>();
   const [activeTab, setActiveTab] = useState<string>('detail-tpu');
 
   const [search, setSearch] = useState(() => {
@@ -458,13 +458,16 @@ export default function DashboardReservation() {
   }, [setSearchParams, defferedSearch, deferredPage, defferedSize]);
 
   useEffect(() => {
-    if (fetcher.data?.data.deceased?.status) {
+    if (fetcher.data?.data.deceased?.status || id) {
       reset({
-        id: fetcher.data?.data.deceased?.id,
-        status: fetcher.data?.data.deceased?.status,
+        id: `${id}`,
+        status:
+          fetcher.data?.data.deceased?.status === 'terverifikasi'
+            ? 'terverifikasi'
+            : 'belum_terverifikasi',
       });
     }
-  }, [reset, _]);
+  }, [reset, id]);
 
   return (
     <>
@@ -475,7 +478,7 @@ export default function DashboardReservation() {
           isHasSearch
           search={search || ''}
           onChangeSearch={setSearch}
-          searchInputPlaceholder='Cari saran'
+          searchInputPlaceholder='Cari reservasi'
           isPaginate
           pagination={{
             page: Number(page),

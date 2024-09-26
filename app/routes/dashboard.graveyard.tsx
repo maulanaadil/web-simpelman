@@ -589,7 +589,7 @@ export default function DashboardGraveyard() {
           isHasSearch
           search={search || ''}
           onChangeSearch={setSearch}
-          searchInputPlaceholder='Cari saran'
+          searchInputPlaceholder='Cari pemakaman'
           isPaginate
           pagination={{
             page: Number(page),

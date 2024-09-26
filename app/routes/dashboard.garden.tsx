@@ -552,7 +552,7 @@ export default function DashboardGarden() {
           isHasSearch
           search={search || ''}
           onChangeSearch={setSearch}
-          searchInputPlaceholder='Cari saran'
+          searchInputPlaceholder='Cari taman'
           isPaginate
           pagination={{
             page: Number(page),
