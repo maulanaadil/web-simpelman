@@ -22,14 +22,15 @@ if (
   !process.env.SMPTP_MAIL_USER ||
   !process.env.SMTP_MAIL_PASSWORD ||
   !process.env.SMTP_MAIL_HOST ||
-  !process.env.SMTP_MAIL_PORT
+  !process.env.SMTP_MAIL_PORT ||
+  !process.env.SMPTP_MAIL_EMAIL
 ) {
   throw new Error('SMTP credentials not found');
 }
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_MAIL_HOST,
-  port: parseInt(process.env.SMTP_MAIL_HOST as string),
+  port: parseInt(process.env.SMTP_MAIL_PORT as string),
   auth: {
     user: process.env.SMPTP_MAIL_USER,
     pass: process.env.SMTP_MAIL_PASSWORD,
@@ -38,7 +39,7 @@ const transporter = nodemailer.createTransport({
 
 export async function sendEmail(body: SendEmailProps) {
   const options = {
-    from: process.env.SMPTP_MAIL_USER,
+    from: process.env.SMPTP_MAIL_EMAIL,
     to: body.to,
   };
 

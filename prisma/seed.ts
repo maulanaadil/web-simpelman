@@ -3,16 +3,16 @@ import { garden, graveyard } from './prebuilt';
 const prisma = new PrismaClient();
 
 async function main() {
-  await prisma.user.create({
-    data: {
-      email: 'admin@simpleman.com',
-      name: 'Admin',
-      password: 'admin123',
-      idCard: '1234567890',
-      phoneNumber: '81234567890',
-      role: 'admin',
-    },
-  });
+  // await prisma.user.create({
+  //   data: {
+  //     email: 'admin@simpleman.com',
+  //     name: 'Admin',
+  //     password: 'admin123',
+  //     idCard: '1234567890',
+  //     phoneNumber: '81234567890',
+  //     role: 'admin',
+  //   },
+  // });
 
   garden.forEach(async (data) => {
     await prisma.garden.create({
