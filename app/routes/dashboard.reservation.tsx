@@ -122,12 +122,12 @@ type Schema = z.infer<typeof schema>;
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
-  const deceasedId = url.searchParams.get('deceasedId');
+  const deceasedId = url.searchParams.get('deceasedId') || '';
   const search = url.searchParams.get('search');
   const page = parseInt(url.searchParams.get('page') || '1', 10);
   const size = parseInt(url.searchParams.get('size') || '10', 10);
 
-  if (deceasedId) {
+  if (!!deceasedId) {
     const deceased = await prisma.deceased.findUnique({
       where: {
         id: deceasedId,

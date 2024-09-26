@@ -75,8 +75,8 @@ model Deceased {
   dateOfBirth     DateTime
   dateOfDeath     DateTime
   burialDate      DateTime
-  graveyard       Graveyard @relation(fields: [graveyardId], references: [id])
-  graveyardId     String
+  graveyard       Graveyard? @relation(fields: [graveyardId], references: [id])
+  graveyardId     String?
   additionalInfo  Json
   addressDetail   AddressDetail?
   additionalFile  AdditionalFile?
