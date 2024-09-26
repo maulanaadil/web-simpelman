@@ -888,6 +888,7 @@ function StepThree({
               <InputUpload
                 label='File KTP Ahli Waris'
                 isRequired
+                isMultiple={false}
                 desc='Upload File KTP dengan Almarhum dengan format “.jpg , .png”'
                 onChange={(value) => field.onChange(value)}
                 value={field.value}
@@ -1389,6 +1390,7 @@ function StepTwo({
                 <InputUpload
                   label='KTP almarhum'
                   isRequired
+                  isMultiple={false}
                   desc='Upload File KTP dengan Almarhum dengan format “.jpg , .png”'
                   onChange={(value) => field.onChange(value)}
                   value={field.value}
@@ -1403,6 +1405,7 @@ function StepTwo({
                 <InputUpload
                   label='File surat kematian'
                   isRequired
+                  isMultiple={false}
                   desc='Upload File Surat Kematian  Almarhum dengan format “.jpg , .png”'
                   onChange={(value) => field.onChange(value)}
                   value={field.value}
@@ -1423,6 +1426,7 @@ function StepTwo({
                       <span className='text-neutral-500'>(optional)</span>
                     </>
                   }
+                  isMultiple={false}
                   desc='Upload File  Surat Keterangan Tidak Mampu “.jpg , .png”'
                   onChange={(value) => field.onChange(value)}
                   value={field.value}
