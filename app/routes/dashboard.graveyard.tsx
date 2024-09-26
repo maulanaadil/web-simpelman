@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Garden, Graveyard } from '@prisma/client';
 import {
   ActionFunctionArgs,
   json,
@@ -19,7 +18,13 @@ import {
 import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import dayjs from 'dayjs';
 import { X } from 'lucide-react';
-import { useCallback, useDeferredValue, useEffect, useState } from 'react';
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { Controller } from 'react-hook-form';
 import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
 import * as XLSX from 'xlsx';
@@ -48,6 +53,11 @@ import { prisma } from '~/services/db.server';
 import { sessionStorage } from '~/services/session.server';
 import { ContextType } from './dashboard';
 import { graveyardTypeOptions, religionOptions } from '~/constants/graveyard';
+import { GraveyardAssociation } from 'types/model';
+
+type Graveyard = GraveyardAssociation & {
+  createdAt: Date;
+};
 
 type LoaderData = {
   data: {
@@ -72,13 +82,10 @@ const schema = z
     name: z.string().min(8).optional(),
     mapUrl: z.string().url().min(8).optional(),
     address: z.string().min(8).optional(),
-    imageUrl: z
-      .custom<UploadValue | undefined>(
+    photos: z
+      .custom<UploadValue[] | undefined>(
         (value) => {
-          if (value) {
-            if (!value.url) {
-              return false;
-            }
+          if (value.length) {
             return true;
           }
           return false;
@@ -104,7 +111,7 @@ const schema = z
       return (
         !!data.name &&
         !!data.address &&
-        !!data.imageUrl &&
+        !!data.photos &&
         !!data.religion &&
         !!data.numberOfGrave &&
         !!data.type &&
@@ -116,7 +123,7 @@ const schema = z
       path: [
         'name',
         'address',
-        'imageUrl',
+        'photos',
         'religion',
         'numberOfGrave',
         'type',
@@ -128,21 +135,55 @@ const schema = z
 type Schema = z.infer<typeof schema>;
 
 export async function loader({ request }: LoaderFunctionArgs) {
+  const session = await sessionStorage.getSession(
+    request.headers.get('Cookie')
+  );
+
   const url = new URL(request.url);
   const graveyardId = url.searchParams.get('graveyardId');
   const search = url.searchParams.get('search');
   const page = parseInt(url.searchParams.get('page') || '1', 10);
   const size = parseInt(url.searchParams.get('size') || '10', 10);
 
-  if (graveyardId) {
+  if (!!graveyardId) {
     const graveyard = await prisma.graveyard.findUnique({
       where: {
         id: graveyardId,
       },
+      include: {
+        photo: true,
+      },
     });
+
+    if (!graveyard) {
+      session.flash('toast', {
+        type: 'error',
+        message: 'Data tidak ditemukan',
+      });
+
+      return json<LoaderData>(
+        {
+          data: {
+            graveyard: null,
+          },
+        },
+        {
+          headers: {
+            'Set-Cookie': await sessionStorage.commitSession(session),
+          },
+        }
+      );
+    }
+
     return json<LoaderData>({
       data: {
-        graveyard,
+        graveyard: {
+          ...graveyard,
+          photos: graveyard.photo.map((photo) => ({
+            ...photo,
+            imageUrl: photo.imageUrl,
+          })),
+        },
       },
     });
   }
@@ -158,6 +199,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
     include: {
       deceased: true,
+      photo: true,
     },
     skip: page * size,
     take: size,
@@ -165,7 +207,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   return json<LoaderData>({
     data: {
-      graveyards,
+      graveyards: graveyards.map((graveyard) => ({
+        ...graveyard,
+        photos: graveyard.photo.map((photo) => ({
+          ...photo,
+          imageUrl: photo.imageUrl,
+        })),
+      })),
       pagination: {
         page,
         size,
@@ -203,7 +251,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return json({
       files: files.map((file) => ({
         name: file.name,
-        url: `/files/${file.name}`,
+        url: `/images/graveyard/${file.name}`,
       })),
     });
   }
@@ -218,7 +266,7 @@ export async function action({ request }: ActionFunctionArgs) {
       {
         name: errors.name?.message,
         address: errors.address?.message,
-        imageUrl: errors.imageUrl?.message,
+        photos: errors.photos?.message,
         religion: errors.religion?.message,
         numberOfGrave: errors.numberOfGrave?.message,
         errors,
@@ -255,7 +303,11 @@ export async function action({ request }: ActionFunctionArgs) {
         name: data.name || '',
         mapsUrl: data.mapUrl || '',
         address: data.address || '',
-        imageUrl: data?.imageUrl?.url || '',
+        photo: {
+          create: data?.photos?.map((photo) => ({
+            imageUrl: photo.url,
+          })),
+        },
         type: data.type || 'biasa',
         additionalInfo: {},
         religion: data.religion || '',
@@ -287,7 +339,16 @@ export async function action({ request }: ActionFunctionArgs) {
         name: data.name || '',
         mapsUrl: data.mapUrl || '',
         address: data.address || '',
-        imageUrl: data?.imageUrl?.url || '',
+        photo: {
+          deleteMany: {
+            id: {
+              notIn: data?.photos?.map((photo) => photo.name),
+            },
+          },
+          create: data?.photos?.map((photo) => ({
+            imageUrl: photo.url,
+          })),
+        },
         religion: data.religion || '',
         type: data.type || 'biasa',
         numberOfGrave: data.numberOfGrave || 0,
@@ -342,6 +403,7 @@ export default function DashboardGraveyard() {
     formState: { errors },
     control,
     reset,
+    watch,
   } = useRemixForm<Schema>({
     mode: 'onSubmit',
     resolver: zodResolver(schema),
@@ -370,17 +432,33 @@ export default function DashboardGraveyard() {
         <p className='text-base-900 line-clamp-1'>{row.original.address}</p>
       ),
     }),
-    columnHelper.accessor((row) => row.imageUrl, {
-      id: 'imageUrl',
+    columnHelper.accessor((row) => row.photos[0], {
+      id: 'photos',
       enableSorting: false,
       header: 'Gambar',
-      cell: ({ row }) => (
-        <img
-          src={row.original.imageUrl}
-          alt={row.original.name}
-          className='w-20 h-20 object-cover rounded-lg'
-        />
-      ),
+      cell: ({ row }) =>
+        row.original.photos.length > 0 ? (
+          row.original.photos.length > 1 ? (
+            <div className='flex flex-wrap gap-1 grow'>
+              {row.original.photos.slice(0, 4).map((photo) => (
+                <img
+                  key={photo.id}
+                  src={photo.imageUrl}
+                  alt={photo.id}
+                  className='w-7 h-7 object-cover rounded'
+                />
+              ))}
+            </div>
+          ) : (
+            <img
+              src={row.original.photos[0].imageUrl}
+              alt={row.original.photos[0].id}
+              className='w-12 h-12 object-cover rounded-lg'
+            />
+          )
+        ) : (
+          <p>No photos available</p>
+        ),
     }),
     columnHelper.accessor((row) => row.type, {
       id: 'type',
@@ -437,7 +515,6 @@ export default function DashboardGraveyard() {
     const worksheetData = data?.graveyards?.map((graveyard) => ({
       Nama: graveyard.name,
       Alamat: graveyard.address,
-      Gambar: graveyard.imageUrl,
       Tipe: GraveyardType[graveyard.type],
       DibuatPada: dayjs(graveyard.createdAt).format('DD MMM YYYY'),
     }));
@@ -463,7 +540,7 @@ export default function DashboardGraveyard() {
         id: '',
         name: '',
         address: '',
-        imageUrl: undefined,
+        photos: undefined,
         mapUrl: '',
         numberOfGrave: 0,
         religion: '',
@@ -477,10 +554,10 @@ export default function DashboardGraveyard() {
         id: fetcher?.data?.data?.graveyard?.id,
         name: fetcher?.data?.data?.graveyard?.name,
         address: fetcher?.data?.data?.graveyard?.address,
-        imageUrl: {
-          name: fetcher?.data?.data?.graveyard?.imageUrl,
-          url: fetcher?.data?.data?.graveyard?.imageUrl,
-        },
+        photos: fetcher?.data?.data?.graveyard?.photos.map((photo) => ({
+          name: photo.imageUrl,
+          url: photo.imageUrl,
+        })),
         mapUrl: fetcher?.data?.data?.graveyard?.mapsUrl,
         numberOfGrave: fetcher?.data?.data?.graveyard?.numberOfGrave,
         religion: fetcher?.data?.data?.graveyard?.religion,
@@ -495,7 +572,7 @@ export default function DashboardGraveyard() {
     fetcher?.data?.data?.graveyard?.id,
     fetcher?.data?.data?.graveyard?.name,
     fetcher?.data?.data?.graveyard?.address,
-    fetcher?.data?.data?.graveyard?.imageUrl,
+    fetcher?.data?.data?.graveyard?.photos,
     fetcher?.data?.data?.graveyard?.additionalInfo,
     fetcher?.data?.data?.graveyard?.mapsUrl,
     fetcher?.data?.data?.graveyard?.numberOfGrave,
@@ -542,195 +619,197 @@ export default function DashboardGraveyard() {
         />
       </div>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle className='p-4 rounded-lg bg-base-200 flex flex-col gap-1'>
-            <div className='flex w-full item-center justify-between'>
-              <p className='text-2xl text-base-900 font-semibold'>
-                {id === 'add' ? 'Tambah' : 'Edit'} Makam
-              </p>
-              <DialogClose>
-                <X className='h-4 w-4' />
-              </DialogClose>
-            </div>
-          </DialogTitle>
-          <DialogDescription className='py-4'>
-            <fetcher.Form
-              className='flex flex-col gap-4 max-h-[30rem] px-2 overflow-y-auto'
-              onSubmit={handleSubmit}
-              method='post'
-              encType='multipart/form-data'
-            >
-              <InputText
-                label={
-                  <>
-                    Nama <span className='text-danger-500'>*</span>
-                  </>
-                }
-                isHookForm
-                control={control}
-                controlName='name'
-                error={errors?.name?.message}
-                description='Nama dari makam tersebut'
-                placeholder='Masukan nama taman'
-                name='name'
-              />
-              <InputText
-                label={
-                  <>
-                    Map Url <span className='text-danger-500'>*</span>
-                  </>
-                }
-                isHookForm
-                control={control}
-                controlName='mapUrl'
-                error={errors?.mapUrl?.message}
-                description='Map Url dari makam tersebut'
-                placeholder='Masukan map url'
-                name='mapUrl'
-              />
-              <Controller
-                control={control}
-                name='address'
-                render={({ field }) => (
-                  <div className='flex flex-col gap-2'>
-                    <div className='flex flex-col'>
-                      <p className='text-base-700 font-medium text-sm mb-1'>
-                        Alamat <span className='text-danger-500'>*</span>
-                      </p>
-                      <p className='text-base-400 text-xs'>
-                        Masukan alamat taman
-                      </p>
+        <fetcher.Form
+          onSubmit={handleSubmit}
+          method='post'
+          encType='multipart/form-data'
+        >
+          <DialogHeader>
+            <DialogTitle className='p-4 rounded-lg bg-base-200 flex flex-col gap-1'>
+              <div className='flex w-full item-center justify-between'>
+                <p className='text-2xl text-base-900 font-semibold'>
+                  {id === 'add' ? 'Tambah' : 'Edit'} Makam
+                </p>
+                <DialogClose>
+                  <X className='h-4 w-4' />
+                </DialogClose>
+              </div>
+            </DialogTitle>
+            <DialogDescription className='py-4'>
+              <div className='flex flex-col gap-4 max-h-[30rem] px-2 overflow-y-auto'>
+                <InputText
+                  label={
+                    <>
+                      Nama <span className='text-danger-500'>*</span>
+                    </>
+                  }
+                  isHookForm
+                  control={control}
+                  controlName='name'
+                  error={errors?.name?.message}
+                  description='Nama dari makam tersebut'
+                  placeholder='Masukan nama taman'
+                  name='name'
+                />
+                <InputText
+                  label={
+                    <>
+                      Map Url <span className='text-danger-500'>*</span>
+                    </>
+                  }
+                  isHookForm
+                  control={control}
+                  controlName='mapUrl'
+                  error={errors?.mapUrl?.message}
+                  description='Map Url dari makam tersebut'
+                  placeholder='Masukan map url'
+                  name='mapUrl'
+                />
+                <Controller
+                  control={control}
+                  name='address'
+                  render={({ field }) => (
+                    <div className='flex flex-col gap-2'>
+                      <div className='flex flex-col'>
+                        <p className='text-base-700 font-medium text-sm mb-1'>
+                          Alamat <span className='text-danger-500'>*</span>
+                        </p>
+                        <p className='text-base-400 text-xs'>
+                          Masukan alamat makam
+                        </p>
+                      </div>
+                      <Textarea
+                        value={field.value}
+                        onChange={(e) => field.onChange(e.target.value)}
+                        name='address'
+                        placeholder='Tulis pesan anda'
+                      />
+                      {errors?.address?.message && (
+                        <p className='text-danger-500 text-sm'>
+                          {errors?.address?.message}
+                        </p>
+                      )}
                     </div>
-                    <Textarea
-                      value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      name='address'
-                      placeholder='Tulis pesan anda'
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name='photos'
+                  render={({ field }) => (
+                    <InputUpload
+                      label='Gambar taman'
+                      isRequired
+                      isMultiple
+                      desc='Upload Gambar taman dengan format “.jpg , .png”'
+                      onChange={(value) => field.onChange(value)}
+                      value={field?.value as UploadValue[]}
+                      error={errors.photos?.message}
                     />
-                    {errors?.address?.message && (
-                      <p className='text-danger-500 text-sm'>
-                        {errors?.address?.message}
-                      </p>
-                    )}
-                  </div>
-                )}
-              />
-              <Controller
-                control={control}
-                name='imageUrl'
-                render={({ field }) => (
-                  <InputUpload
-                    label='Gambar taman'
-                    isRequired
-                    desc='Upload Gambar taman dengan format “.jpg , .png”'
-                    onChange={(value) => field.onChange(value)}
-                    value={field?.value as UploadValue}
-                    error={errors.imageUrl?.message}
-                  />
-                )}
-              />
-              <Controller
-                control={control}
-                name='type'
-                render={({ field }) => (
-                  <div className='flex flex-col gap-2 mb-2'>
-                    <div className='flex flex-col'>
-                      <p className='text-base-700 font-medium text-sm'>
-                        Tipe <span className='text-danger-500'>*</span>
-                      </p>
-                      <p className='text-base-400 text-xs'>
-                        Masukan tipe taman
-                      </p>
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name='type'
+                  render={({ field }) => (
+                    <div className='flex flex-col gap-2 mb-2'>
+                      <div className='flex flex-col'>
+                        <p className='text-base-700 font-medium text-sm'>
+                          Tipe <span className='text-danger-500'>*</span>
+                        </p>
+                        <p className='text-base-400 text-xs'>
+                          Masukan tipe taman
+                        </p>
+                      </div>
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) => field.onChange(value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder='Pilih taman' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {graveyardTypeOptions.map((type) => (
+                            <SelectItem key={type.value} value={type.value}>
+                              {type.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {errors?.type?.message && (
+                        <p className='text-danger-500 text-sm'>
+                          {errors?.type?.message}
+                        </p>
+                      )}
                     </div>
-                    <Select
-                      value={field.value}
-                      onValueChange={(value) => field.onChange(value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder='Pilih taman' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {graveyardTypeOptions.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors?.type?.message && (
-                      <p className='text-danger-500 text-sm'>
-                        {errors?.type?.message}
-                      </p>
-                    )}
-                  </div>
-                )}
-              />
-              <Controller
-                control={control}
-                name='religion'
-                render={({ field }) => (
-                  <div className='flex flex-col gap-2 mb-2'>
-                    <div className='flex flex-col'>
-                      <p className='text-base-700 font-medium text-sm'>
-                        Agama <span className='text-danger-500'>*</span>
-                      </p>
-                      <p className='text-base-400 text-xs'>
-                        Masukan agama taman
-                      </p>
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name='religion'
+                  render={({ field }) => (
+                    <div className='flex flex-col gap-2 mb-2'>
+                      <div className='flex flex-col'>
+                        <p className='text-base-700 font-medium text-sm'>
+                          Agama <span className='text-danger-500'>*</span>
+                        </p>
+                        <p className='text-base-400 text-xs'>
+                          Masukan agama taman
+                        </p>
+                      </div>
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) => field.onChange(value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder='Pilih taman' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {religionOptions.map((religion) => (
+                            <SelectItem
+                              key={religion.value}
+                              value={religion.value}
+                            >
+                              {religion.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {errors?.religion?.message && (
+                        <p className='text-danger-500 text-sm'>
+                          {errors?.religion?.message}
+                        </p>
+                      )}
                     </div>
-                    <Select
-                      value={field.value}
-                      onValueChange={(value) => field.onChange(value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder='Pilih taman' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {religionOptions.map((religion) => (
-                          <SelectItem
-                            key={religion.value}
-                            value={religion.value}
-                          >
-                            {religion.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors?.religion?.message && (
-                      <p className='text-danger-500 text-sm'>
-                        {errors?.religion?.message}
-                      </p>
-                    )}
-                  </div>
-                )}
-              />
-              <InputText
-                label={
-                  <>
-                    Jumlah makam tersedia{' '}
-                    <span className='text-danger-500'>*</span>
-                  </>
-                }
-                type='number'
-                isHookForm
-                control={control}
-                controlName='numberOfGrave'
-                error={errors?.numberOfGrave?.message}
-                description='Jumlah makam yang tersedia'
-                placeholder='Masukan jumlah makam'
-                name='numberOfGrave'
-              />
-            </fetcher.Form>
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <div className='flex items-center gap-4 justify-end'>
-            <DialogClose asChild>
-              <Button text='Batalkan' variant='outline' />
-            </DialogClose>
-            <Button text={id !== 'add' ? 'Simpan' : 'Update'} type='submit' />
-          </div>
-        </DialogFooter>
+                  )}
+                />
+                <InputText
+                  label={
+                    <>
+                      Jumlah makam tersedia{' '}
+                      <span className='text-danger-500'>*</span>
+                    </>
+                  }
+                  type='number'
+                  isHookForm
+                  control={control}
+                  controlName='numberOfGrave'
+                  error={errors?.numberOfGrave?.message}
+                  description='Jumlah makam yang tersedia'
+                  placeholder='Masukan jumlah makam'
+                  name='numberOfGrave'
+                />
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <div className='flex items-center gap-4 justify-end'>
+              <DialogClose asChild>
+                <Button text='Batalkan' variant='outline' />
+              </DialogClose>
+              <Button text={id === 'add' ? 'Simpan' : 'Update'} type='submit' />
+            </div>
+          </DialogFooter>
+        </fetcher.Form>
       </DialogContent>
     </>
   );

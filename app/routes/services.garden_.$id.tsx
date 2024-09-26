@@ -10,6 +10,7 @@ import { Form, useLoaderData } from '@remix-run/react';
 import { Controller } from 'react-hook-form';
 import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
 import { redirectWithSuccess } from 'remix-toast';
+import { GardenAssociation } from 'types/model';
 import { z } from 'zod';
 import Banner from '~/components/banner';
 import Button from '~/components/button';
@@ -28,7 +29,9 @@ import { prisma } from '~/services/db.server';
 import { sessionStorage } from '~/services/session.server';
 
 type LoaderData = {
-  garden: Omit<Garden, 'createdAt' | 'updatedAt'> | null;
+  data: {
+    garden: GardenAssociation;
+  };
 };
 
 const schema = z.object({
@@ -47,13 +50,39 @@ const schema = z.object({
 type FeedbackSchema = z.infer<typeof schema>;
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
+  const session = await sessionStorage.getSession(
+    request.headers.get('Cookie')
+  );
+
   const garden = await prisma.garden.findUnique({
     where: {
       id: params.id,
     },
+    include: {
+      photo: true,
+    },
   });
 
-  return json({ garden });
+  if (!garden) {
+    session.flash('toast', {
+      type: 'error',
+      message: 'Data tidak ditemukan',
+    });
+    return redirect('/services/garden', {
+      headers: {
+        'Set-Cookie': await sessionStorage.commitSession(session),
+      },
+    });
+  }
+
+  return json<LoaderData>({
+    data: {
+      garden: {
+        ...garden,
+        photos: garden.photo,
+      },
+    },
+  });
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -107,32 +136,50 @@ export default function GardenDetail() {
     mode: 'onSubmit',
     resolver: zodResolver(schema),
   });
-  const { garden } = useLoaderData<LoaderData>();
+  const loaderData = useLoaderData<LoaderData>();
 
   return (
     <MainLayout>
       <Banner
-        title={garden?.name || ''}
+        title={loaderData.data?.garden?.name || ''}
         subtitle={
           <div className='flex flex-col gap-3 '>
             <p className='text-sm text-base-50'>
-              {garden?.type === 'square' ? 'Alun alun' : 'Pemda'}
+              {loaderData.data?.garden?.type === 'square'
+                ? 'Alun alun'
+                : 'Pemda'}
             </p>
-            <p className='text-sm text-base-50'>{garden?.address}</p>
+            <p className='text-sm text-base-50'>
+              {loaderData.data?.garden?.address}
+            </p>
           </div>
         }
         breadcrumbs={[
           { label: 'Layanan', href: '/services' },
           { label: 'Pertamanan', href: '/services/garden' },
-          { label: garden?.name || '', href: `/services/${garden?.id}` },
+          {
+            label: loaderData.data?.garden?.name || '',
+            href: `/services/${loaderData.data?.garden?.id}`,
+          },
         ]}
       />
       <div className='py-10 container'>
-        <img
-          src={garden?.imageUrl}
-          alt={garden?.name}
-          className='w-full h-[31.25rem] object-cover rounded-lg'
-        />
+        <div className='grid grid-cols-4 gap-3'>
+          <img
+            src={loaderData.data?.garden?.photos[0].imageUrl}
+            alt={loaderData.data?.garden?.photos[0].id}
+            className='w-full h-[31.25rem] col-span-3 object-cover rounded-lg'
+          />
+          <div className='flex flex-col gap-2'>
+            {loaderData.data?.garden?.photos.slice(1, 3).map((photo) => (
+              <img
+                src={photo.imageUrl}
+                alt={photo.id}
+                className='w-full h-[15.625rem] object-cover rounded-lg'
+              />
+            ))}
+          </div>
+        </div>
 
         <div className='flex flex-col gap-6 mt-10'>
           <p className='text-2xl font-bold text-base-900'>Saran</p>

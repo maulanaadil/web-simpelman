@@ -16,6 +16,7 @@ import Widget from './components/widget';
 import './tailwind.css';
 
 import sonnerStyles from '~/styles/sonner.css?url';
+import Progressbar from './components/progressbar';
 import { sessionStorage } from './services/session.server';
 
 export const links: LinksFunction = () => [
@@ -55,11 +56,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
           closeButton: true,
         });
       }
+      if (loaderData?.toast?.type === 'info') {
+        notify.info(loaderData?.toast.message, {
+          closeButton: true,
+        });
+      }
       if (loaderData?.user) {
         localStorage.setItem('user', JSON.stringify(loaderData?.user));
       }
     }
-  }, [loaderData]);
+  }, [loaderData, loaderData?.user]);
 
   return (
     <html lang='en'>
@@ -70,6 +76,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
+        <Progressbar />
         <Toaster richColors position='top-right' />
         {children}
         <Widget />

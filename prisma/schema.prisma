@@ -17,6 +17,7 @@ model User {
     name        String?
     deceased    Deceased[]
     role        Role      @default(user)
+    isVerified  Boolean @default(false)
     createdAt   DateTime @default(now())
     updatedAt   DateTime @updatedAt
 }
@@ -25,9 +26,9 @@ model Garden {
   id          String      @id @default(uuid())  
   name        String @unique
   address     String
-  imageUrl    String
   type        GardenType
   feedback    Feedback[]
+  photo       Photo[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   @@fulltext([name])
@@ -53,11 +54,11 @@ model Graveyard {
   mapsUrl         String
   address         String
   type            GraveyardType
-  imageUrl        String
   religion        String
   additionalInfo  Json
   numberOfGrave   Int
   deceased        Deceased[]
+  photo           Photo[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   @@fulltext([name])
@@ -148,6 +149,18 @@ model AdditionalFile {
   @@fulltext([ktpUrl])
   @@fulltext([certificateUrl])
   @@fulltext([incapabilityCertificateUrl])
+}
+
+model Photo {
+  id          String      @id @default(uuid())
+  imageUrl    String
+  garden      Garden?   @relation(fields: [gardenId], references: [id])
+  gardenId    String?
+  graveyard   Graveyard? @relation(fields: [graveyardId], references: [id])
+  graveyardId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@fulltext([imageUrl])
 }
 
 enum Role {

@@ -34,12 +34,22 @@ export async function validateAction<ActionInput>({
 }
 
 export const validatePassword = (password: string) => {
-  const hasUppercase = /[A-Z]/.test(password);
+  const hasUppercase = /[A-Z]/.test(password); // Check for at least one uppercase letter
+  const hasLowercase = /[a-z]/.test(password); // Check for at least one lowercase letter
+  const hasNumber = /[0-9]/.test(password); // Check for at least one number
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password); // Check for at least one special character
+  const isLongEnough = password.length >= 8; // Check if password length is at least 8 characters
+  const uniqueChars = new Set(password); // Set will automatically filter out duplicates
+  const hasEnoughUniqueChars = uniqueChars.size >= 5; // Ensure there are at least 5 unique characters
 
-  const uniqueChars = new Set(password);
-  const hasUniqueChars = uniqueChars.size === password.length;
-
-  return hasUppercase && hasUniqueChars;
+  return (
+    hasUppercase &&
+    hasLowercase &&
+    hasNumber &&
+    hasSpecialChar &&
+    isLongEnough &&
+    hasEnoughUniqueChars
+  );
 };
 
 export const validatePhoneNumber = (phoneNumber: string) => {

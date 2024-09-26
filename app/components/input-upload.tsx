@@ -8,9 +8,19 @@ export type UploadValue = {
   url: string;
 };
 
+type MultipleUpload =
+  | {
+      isMultiple: true;
+      value: UploadValue[];
+      onChange: (value: UploadValue[]) => void;
+    }
+  | {
+      isMultiple: false;
+      value: UploadValue;
+      onChange: (value: UploadValue) => void;
+    };
+
 type InputUploadProps<T> = {
-  onChange: (value: UploadValue) => void;
-  value: UploadValue;
   className?: string;
   label?: string | React.ReactNode;
   isRequired?: boolean;
@@ -18,7 +28,7 @@ type InputUploadProps<T> = {
   containerClassName?: string;
   error?: string;
   accept?: string;
-};
+} & MultipleUpload;
 
 const defaultAccepts = 'application/pdf, image/jpeg, image/jpg, image/png';
 
@@ -31,6 +41,7 @@ export default function InputUpload<T>({
   desc,
   containerClassName,
   error,
+  isMultiple,
   accept = defaultAccepts,
 }: InputUploadProps<T>) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -64,9 +75,21 @@ export default function InputUpload<T>({
 
   useEffect(() => {
     if (files.length > 0) {
-      onChange?.(files[0]);
+      if (isMultiple) {
+        const currentFiles = value as UploadValue[];
+        const fileNames = files.map((file) => file.name);
+        const currentFileNames = currentFiles?.map((file) => file.name) || [];
+        if (JSON.stringify(fileNames) !== JSON.stringify(currentFileNames)) {
+          onChange?.(files);
+        }
+      } else {
+        const currentFile = value as UploadValue;
+        if (files[0]?.name !== currentFile?.name) {
+          onChange?.(files[0]);
+        }
+      }
     }
-  }, [files[0]]);
+  }, [files, isMultiple, value, onChange]); // Add value and onChange to dependency array
 
   return (
     <div className={cn('flex flex-col gap-2 mb-2', containerClassName)}>
@@ -97,12 +120,24 @@ export default function InputUpload<T>({
               name='file'
               style={{ display: 'none' }}
               accept={accept}
-              multiple={false}
+              multiple={isMultiple}
               onChange={(event) => handleSubmit(event.target.files)}
             />
             {!isHasFiles && <UploadCloud color='#C4C4C4' size='24' />}
-
-            {value ? (
+            {isMultiple ? (
+              value && value.length > 0 ? (
+                value.map((val, index) => (
+                  <p key={index} className='text-sm text-base-900 font-light'>
+                    {val.name}
+                    {index < value.length - 1 ? ', ' : ''}
+                  </p>
+                ))
+              ) : (
+                <p className='text-sm text-base-400 font-light'>
+                  No files selected
+                </p>
+              )
+            ) : value ? (
               <p className='text-sm text-base-900 font-light'>{value.name}</p>
             ) : (
               <p className='text-sm text-base-400 font-light'>Upload file</p>

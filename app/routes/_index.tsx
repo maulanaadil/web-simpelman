@@ -2,12 +2,19 @@ import { Garden } from '@prisma/client';
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
 import { json, useLoaderData, useNavigate } from '@remix-run/react';
 import { ArrowRight2 } from 'iconsax-react';
+import { GardenAssociation } from 'types/model';
 import LogoIcon from '~/assets/icons/logo';
 import Button from '~/components/button';
 import DistrictOfficeCard from '~/components/district-office-card';
 import { sevices } from '~/constants/services';
 import { MainLayout } from '~/layouts/main';
 import { prisma } from '~/services/db.server';
+
+type LoaderData = {
+  data: {
+    gardens: GardenAssociation[];
+  };
+};
 
 export const meta: MetaFunction = () => {
   return [
@@ -17,24 +24,34 @@ export const meta: MetaFunction = () => {
 };
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const garden = await prisma.garden.findMany({
+  const gardens = await prisma.garden.findMany({
     take: 3,
     orderBy: {
       createdAt: 'desc',
     },
+    include: {
+      photo: true,
+    },
   });
 
-  return json({ garden });
+  return json<LoaderData>({
+    data: {
+      gardens: gardens.map((garden) => ({
+        ...garden,
+        photos: garden.photo,
+      })),
+    },
+  });
 }
 
 export default function Index() {
-  const { garden } = useLoaderData<typeof loader>();
+  const loaderData = useLoaderData<typeof loader>();
 
   return (
     <MainLayout>
       <Hero />
       <Services />
-      <Information garden={garden} />
+      <Information gardens={loaderData.data.gardens} />
     </MainLayout>
   );
 }
@@ -145,11 +162,7 @@ export function Services() {
   );
 }
 
-export function Information({
-  garden,
-}: {
-  garden: Omit<Garden, 'createdAt' | 'updatedAt'>[];
-}) {
+export function Information({ gardens }: { gardens: GardenAssociation[] }) {
   const navigate = useNavigate();
   return (
     <div className='container py-[3.5rem]'>
@@ -170,7 +183,7 @@ export function Information({
         </div>
       </div>
       <div className='mt-16 grid grid-cols-3 gap-6'>
-        {garden.map((item) => (
+        {gardens.map((item) => (
           <div
             key={item.id}
             onClick={() =>
@@ -181,7 +194,7 @@ export function Information({
             <div className='w-full h-[14.5rem]'>
               <img
                 className='object-cover w-full h-full'
-                src={item.imageUrl}
+                src={item.photos[0].imageUrl}
                 alt='graveyard-article'
                 loading='lazy'
               />

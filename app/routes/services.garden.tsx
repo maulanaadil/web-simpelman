@@ -5,9 +5,12 @@ import Banner from '~/components/banner';
 import { MainLayout } from '~/layouts/main';
 import { prisma } from '~/services/db.server';
 import { Information } from './_index';
+import { GardenAssociation } from 'types/model';
 
 type LoaderData = {
-  garden: Omit<Garden, 'createdAt' | 'updatedAt'>[];
+  data: {
+    gardens: GardenAssociation[];
+  };
 };
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -15,13 +18,23 @@ export async function loader({ request }: LoaderFunctionArgs) {
     orderBy: {
       createdAt: 'desc',
     },
+    include: {
+      photo: true,
+    },
   });
 
-  return json({ garden });
+  return json<LoaderData>({
+    data: {
+      gardens: garden.map((garden) => ({
+        ...garden,
+        photos: garden.photo,
+      })),
+    },
+  });
 }
 
 export default function Garden() {
-  const { garden } = useLoaderData<LoaderData>();
+  const loaderData = useLoaderData<LoaderData>();
 
   return (
     <MainLayout>
@@ -33,7 +46,7 @@ export default function Garden() {
           { label: 'Pertamanan', href: '/services/garden' },
         ]}
       />
-      <Information garden={garden} />
+      <Information gardens={loaderData.data.gardens} />
     </MainLayout>
   );
 }

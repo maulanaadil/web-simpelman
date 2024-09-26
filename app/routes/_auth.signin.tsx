@@ -44,6 +44,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const session = await sessionStorage.getSession(
     request.headers.get('Cookie')
   );
+
   const {
     errors,
     data,
@@ -68,6 +69,11 @@ export async function action({ request }: ActionFunctionArgs) {
   });
 
   if (!user) {
+    session.flash('toast', {
+      type: 'error',
+      message: 'Email tidak ditemukan',
+    });
+
     return json(
       {
         email: undefined,
@@ -78,7 +84,37 @@ export async function action({ request }: ActionFunctionArgs) {
           },
         },
       },
-      { status: 400 }
+      {
+        headers: {
+          'Set-Cookie': await sessionStorage.commitSession(session),
+        },
+        status: 400,
+      }
+    );
+  }
+
+  if (!user.isVerified) {
+    session.flash('toast', {
+      type: 'error',
+      message: 'Email belum diverifikasi',
+    });
+
+    return json(
+      {
+        email: undefined,
+        password: undefined,
+        errors: {
+          email: {
+            message: 'Email belum diverifikasi',
+          },
+        },
+      },
+      {
+        headers: {
+          'Set-Cookie': await sessionStorage.commitSession(session),
+        },
+        status: 400,
+      }
     );
   }
 

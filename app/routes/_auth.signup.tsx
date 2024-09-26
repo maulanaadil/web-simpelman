@@ -1,16 +1,17 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ActionFunctionArgs } from '@remix-run/node';
+import { ActionFunctionArgs, redirect } from '@remix-run/node';
 import { Form, json, useNavigate, useNavigation } from '@remix-run/react';
 import bcrypt from 'bcryptjs';
 import { BackSquare } from 'iconsax-react';
 import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
-import { redirectWithSuccess } from 'remix-toast';
 import { z } from 'zod';
 import Button from '~/components/button';
 import InputPassword from '~/components/input-password';
 import InputText from '~/components/input-text';
 import { prisma } from '~/services/db.server';
+import { sessionStorage } from '~/services/session.server';
 import { validatePassword, validatePhoneNumber } from '~/utils/common/validate';
+import { sendEmail } from '~/utils/mailer';
 
 const schema = z.object({
   name: z.string().min(3),
@@ -28,6 +29,10 @@ const schema = z.object({
 export type SignUpSchema = z.infer<typeof schema>;
 
 export async function action({ request }: ActionFunctionArgs) {
+  const session = await sessionStorage.getSession(
+    request.headers.get('Cookie')
+  );
+
   const { data, errors } = await getValidatedFormData<SignUpSchema>(
     request,
     zodResolver(schema)
@@ -68,6 +73,11 @@ export async function action({ request }: ActionFunctionArgs) {
   ]);
 
   if (user) {
+    session.flash('toast', {
+      type: 'error',
+      message: 'Email sudah terdaftar',
+    });
+
     return json(
       {
         email: undefined,
@@ -82,12 +92,20 @@ export async function action({ request }: ActionFunctionArgs) {
         },
       },
       {
+        headers: {
+          'Set-Cookie': await sessionStorage.commitSession(session),
+        },
         status: 400,
       }
     );
   }
 
   if (idCardUser) {
+    session.flash('toast', {
+      type: 'error',
+      message: 'Nomor KTP sudah terdaftar',
+    });
+
     return json(
       {
         email: undefined,
@@ -102,12 +120,20 @@ export async function action({ request }: ActionFunctionArgs) {
         },
       },
       {
+        headers: {
+          'Set-Cookie': await sessionStorage.commitSession(session),
+        },
         status: 400,
       }
     );
   }
 
   if (_phoneNumber) {
+    session.flash('toast', {
+      type: 'error',
+      message: 'Nomor HP sudah terdaftar',
+    });
+
     return json(
       {
         email: undefined,
@@ -122,6 +148,9 @@ export async function action({ request }: ActionFunctionArgs) {
         },
       },
       {
+        headers: {
+          'Set-Cookie': await sessionStorage.commitSession(session),
+        },
         status: 400,
       }
     );
@@ -129,7 +158,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const hashedPassword = await bcrypt.hash(password, 8);
 
-  await prisma.user.create({
+  const newUser = await prisma.user.create({
     data: {
       email,
       password: hashedPassword,
@@ -139,8 +168,22 @@ export async function action({ request }: ActionFunctionArgs) {
     },
   });
 
-  return redirectWithSuccess('/signin', {
-    message: 'Berhasil mendaftar',
+  await sendEmail({
+    name: newUser?.name,
+    to: email,
+    link: `${process.env.REMIX_APP_URL}/verify?userId=${newUser.id}`,
+    type: 'verify',
+  });
+
+  session.flash('toast', {
+    type: 'info',
+    message: 'Check email anda untuk verifikasi',
+  });
+
+  return redirect(`/check-email?userId=${newUser.id}`, {
+    headers: {
+      'Set-Cookie': await sessionStorage.commitSession(session),
+    },
   });
 }
 
