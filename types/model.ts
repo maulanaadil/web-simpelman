@@ -8,6 +8,7 @@ export type Feedback = {
   id: number;
   email: string;
   content: string;
+  photo: Photo[];
   about: 'infrastructural_facilities' | 'service' | 'location' | 'advice';
   createdAt: Date;
   updatedAt: Date;
