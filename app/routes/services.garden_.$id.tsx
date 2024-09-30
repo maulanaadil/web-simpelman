@@ -1,20 +1,24 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { Garden } from '@prisma/client';
 import {
   ActionFunctionArgs,
   json,
   LoaderFunctionArgs,
+  NodeOnDiskFile,
   redirect,
+  unstable_composeUploadHandlers,
+  unstable_createFileUploadHandler,
+  unstable_createMemoryUploadHandler,
+  unstable_parseMultipartFormData,
 } from '@remix-run/node';
 import { Form, useLoaderData } from '@remix-run/react';
 import { Controller } from 'react-hook-form';
 import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
-import { redirectWithSuccess } from 'remix-toast';
 import { GardenAssociation } from 'types/model';
 import { z } from 'zod';
 import Banner from '~/components/banner';
 import Button from '~/components/button';
 import InputText from '~/components/input-text';
+import InputUpload, { UploadValue } from '~/components/input-upload';
 import {
   Select,
   SelectContent,
@@ -42,6 +46,7 @@ const schema = z.object({
     'location',
     'advice',
   ]),
+  photos: z.custom<UploadValue[] | undefined>().optional(),
   message: z
     .string()
     .min(10, { message: 'Message must be at least 10 characters' }),
@@ -89,8 +94,38 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const session = await sessionStorage.getSession(
     request.headers.get('Cookie')
   );
-  const { errors, data } = await getValidatedFormData<FeedbackSchema>(
+
+  const formData = await unstable_parseMultipartFormData(
     request,
+    unstable_composeUploadHandlers(
+      unstable_createFileUploadHandler({
+        directory: './public/images/feedback',
+        avoidFileConflicts: false,
+        // Use the actual filename as the final filename
+        file({ filename }) {
+          return filename;
+        },
+        // Limit the max size to 10MB
+        maxPartSize: 10 * 1024 * 1024,
+      }),
+      unstable_createMemoryUploadHandler()
+    )
+  );
+
+  const file = formData.get('file');
+
+  if (file) {
+    const files = formData.getAll('file') as NodeOnDiskFile[];
+    return json({
+      files: files.map((file) => ({
+        name: file.name,
+        url: `/images/feedback/${file.name}`,
+      })),
+    });
+  }
+
+  const { errors, data } = await getValidatedFormData<FeedbackSchema>(
+    formData,
     zodResolver(schema)
   );
 
@@ -112,6 +147,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
       about: data.about!,
       content: data.message,
       gardenId: params.id || '',
+      photo: {
+        create: data?.photos?.map((photo) => ({
+          imageUrl: photo.url,
+        })),
+      },
     },
   });
 
@@ -187,6 +227,7 @@ export default function GardenDetail() {
             className='flex flex-col gap-4'
             method='post'
             onSubmit={handleSubmit}
+            encType='multipart/form-data'
           >
             <InputText
               label={
@@ -253,6 +294,21 @@ export default function GardenDetail() {
                     </p>
                   )}
                 </div>
+              )}
+            />
+            <Controller
+              control={control}
+              name='photos'
+              render={({ field }) => (
+                <InputUpload
+                  label='Masukan gambar'
+                  isRequired
+                  isMultiple
+                  desc='Upload Gambar taman dengan format “.jpg , .png”'
+                  onChange={(value) => field.onChange(value)}
+                  value={field?.value as UploadValue[]}
+                  error={errors.photos?.message}
+                />
               )}
             />
             <Button size='full' type='submit' text='Kirim Pesan' />

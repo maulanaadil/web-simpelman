@@ -56,6 +56,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       },
       include: {
         garden: true,
+        photo: true,
       },
     });
     return json<LoaderData>({
@@ -73,6 +74,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
     include: {
       garden: true,
+      photo: true,
     },
     skip: page * size,
     take: size,
@@ -169,6 +171,34 @@ export default function DashboardFeedback() {
       cell: ({ row }) => (
         <p className='text-base-900'>{AboutFeedback[row.original.about]}</p>
       ),
+    }),
+    columnHelper.accessor((row) => row.photo[0], {
+      id: 'photos',
+      enableSorting: false,
+      header: 'Gambar',
+      cell: ({ row }) =>
+        row.original.photo.length > 0 ? (
+          row.original.photo.length > 1 ? (
+            <div className='flex flex-wrap gap-1 grow'>
+              {row.original.photo.slice(0, 4).map((data) => (
+                <img
+                  key={data.id}
+                  src={data.imageUrl}
+                  alt={data.id}
+                  className='w-7 h-7 object-cover rounded'
+                />
+              ))}
+            </div>
+          ) : (
+            <img
+              src={row.original.photo[0].imageUrl}
+              alt={row.original.photo[0].id}
+              className='w-12 h-12 object-cover rounded-lg'
+            />
+          )
+        ) : (
+          <p>No photos available</p>
+        ),
     }),
     columnHelper.accessor((row) => row.createdAt, {
       id: 'createdAt',
@@ -307,6 +337,19 @@ export default function DashboardFeedback() {
               <div className='flex items-center gap-2'>
                 <p className='font-semibold text-neutral-900'>Dibuat pada: </p>
                 <p>{fetcher.data?.data.feedback?.createdAt}</p>
+              </div>
+              <div className='flex items-center gap-2'>
+                <p className='font-semibold text-neutral-900'>Gambar: </p>
+                <div className='flex flex-wrap items-center gap-4'>
+                  {fetcher.data?.data.feedback?.photo.map((photo) => (
+                    <img
+                      key={photo.id}
+                      src={photo.imageUrl}
+                      alt={photo.id}
+                      className='w-32 h-32 object-cover rounded-lg'
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           </DialogDescription>
