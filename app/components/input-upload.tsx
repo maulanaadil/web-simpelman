@@ -89,7 +89,7 @@ export default function InputUpload<T>({
         }
       }
     }
-  }, [files, isMultiple, value, onChange]); // Add value and onChange to dependency array
+  }, [files, isMultiple, value, onChange, files[0]]);
 
   return (
     <div className={cn('flex flex-col gap-2 mb-2', containerClassName)}>

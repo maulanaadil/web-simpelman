@@ -139,7 +139,6 @@ const schema = z.object({
   heirsIdCard: z.string(),
   heirsPhoneNumber: z.string(),
   heirsJob: z.string(),
-  isHeirsAddressSame: z.boolean(),
   heirsHomeNumber: z.string(),
   heirsStreet: z.string(),
   heirsRt: z.string(),
@@ -349,37 +348,19 @@ export async function action({ request }: ActionFunctionArgs) {
     },
   });
 
-  const isHeirsAddressSame = data.isHeirsAddressSame;
-
-  if (isHeirsAddressSame) {
-    await prisma.addressDetail.create({
-      data: {
-        homeNumber: data.homeNumber,
-        street: data.street,
-        rt: data.rt,
-        rw: data.rw,
-        province: data.province,
-        city: data.city,
-        district: data.district,
-        neighborhood: data.neighborhood,
-        heirsId: heirs.id,
-      },
-    });
-  } else {
-    await prisma.addressDetail.create({
-      data: {
-        homeNumber: data.heirsHomeNumber,
-        street: data.heirsStreet,
-        rt: data.heirsRt,
-        rw: data.heirsRw,
-        province: data.heirsProvince,
-        city: data.heirsCity,
-        district: data.heirsDistrict,
-        neighborhood: data.heirsNeighborhood,
-        heirsId: heirs.id,
-      },
-    });
-  }
+  await prisma.addressDetail.create({
+    data: {
+      homeNumber: data.heirsHomeNumber,
+      street: data.heirsStreet,
+      rt: data.heirsRt,
+      rw: data.heirsRw,
+      province: data.heirsProvince,
+      city: data.heirsCity,
+      district: data.heirsDistrict,
+      neighborhood: data.heirsNeighborhood,
+      heirsId: heirs.id,
+    },
+  });
 
   await prisma.additionalFile.create({
     data: {
@@ -521,18 +502,6 @@ function StepThree({
 } & Partial<LoaderData>) {
   const fetcher = useFetcher<typeof loader>();
 
-  const isHeirsAddressSame = watch('isHeirsAddressSame');
-
-  useEffect(() => {
-    if (isHeirsAddressSame) {
-      setValue('heirsHomeNumber', watch('homeNumber'));
-      setValue('heirsStreet', watch('street'));
-      setValue('heirsRt', watch('rt'));
-      setValue('heirsRw', watch('rw'));
-      setValue('heirsProvince', watch('province'));
-    }
-  }, [isHeirsAddressSame]);
-
   return (
     <div className='p-5 bg-base-50 rounded-xl shadow border border-base-200 flex flex-col gap-10'>
       <div className='bg-base-200 rounded-xl p-5 flex flex-col gap-4'>
@@ -628,26 +597,7 @@ function StepThree({
           </div>
         </div>
         <div className='flex flex-col gap-3'>
-          <div className='flex items-center gap-4'>
-            <p className='text-xl text-base-900 font-medium'>
-              Alamat Ahli Waris
-            </p>
-            <Controller
-              control={control}
-              name='isHeirsAddressSame'
-              render={({ field }) => (
-                <div className='flex items-center gap-2'>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                  <p className='text-base-900 text-sm font-light'>
-                    Sama Dengan Alamat Almahum
-                  </p>
-                </div>
-              )}
-            />
-          </div>
+          <p className='text-xl text-base-900 font-medium'>Alamat Ahli Waris</p>
           <div className='grid grid-cols-2 gap-8'>
             <InputText
               label={
